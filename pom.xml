@@ -27,5 +27,21 @@
 			<version>1.2.1</version>
 		</dependency>
 
+		<!-- Guava -->
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>18.0</version>
+		</dependency>
+
+		<!-- Guava Gson -->
+		<dependency>
+			<groupId>com.google.http-client</groupId>
+			<artifactId>google-http-client-gson</artifactId>
+			<version>1.14.0-beta</version>
+		</dependency>
+
+
+
 	</dependencies>
 </project>
