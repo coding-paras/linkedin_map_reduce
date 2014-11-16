@@ -9,6 +9,8 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.hadoop.io.WritableComparable;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  * Class that holds position information of an employee.
  * 
@@ -23,10 +25,14 @@ public class Position implements WritableComparable<Position> {
 
 	private String summary;
 	private String title;
-	private String companyName;
-	private boolean isCurrent;
+	@SerializedName(value="start-date")
 	private String startDate;
+	@SerializedName(value="end-date")
 	private String endDate;
+	@SerializedName(value="is-current")
+	private boolean isCurrent;
+	@SerializedName(value="company-name")
+	private String companyName;
 	private String sector;
 
 	public Position() {

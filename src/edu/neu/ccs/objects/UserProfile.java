@@ -11,6 +11,8 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.hadoop.io.WritableComparable;
 
+import com.google.gson.annotations.SerializedName;
+
 /**
  * Sample record: 
  * {
@@ -32,22 +34,25 @@ import org.apache.hadoop.io.WritableComparable;
  * }
  * 
  */
-
 public class UserProfile implements WritableComparable<UserProfile> {
-
-	private String firstName;
-	private String lastName;
-	private int numOfConnections;
-	private String industry;
-	private String location;
+	
+	@SerializedName(value="skills")
 	private List<String> skillSet = new ArrayList<String>();
 	private List<Position> positions = new ArrayList<Position>();
+	private String location;
+	@SerializedName(value="num-connections")
+	private String numOfConnections;
+	@SerializedName(value="first-name")
+	private String firstName;
+	@SerializedName(value="last-name")
+	private String lastName;
+	private String industry;
 	
 	public UserProfile() {
 		
 	}
 	
-	public UserProfile(String firstName, String lastName, int numOfConnections,String industry, String location, List<String> skillSet,
+	public UserProfile(String firstName, String lastName, String numOfConnections,String industry, String location, List<String> skillSet,
 			List<Position> positions) {
 		
 		super();
@@ -76,11 +81,11 @@ public class UserProfile implements WritableComparable<UserProfile> {
 		this.lastName = lastName;
 	}
 
-	public int getNumOfConnections() {
+	public String getNumOfConnections() {
 		return numOfConnections;
 	}
 
-	public void setNumOfConnections(int numOfConnections) {
+	public void setNumOfConnections(String numOfConnections) {
 		this.numOfConnections = numOfConnections;
 	}
 
@@ -121,7 +126,7 @@ public class UserProfile implements WritableComparable<UserProfile> {
 		
 		this.firstName = in.readUTF();
 		this.lastName = in.readUTF();
-		this.numOfConnections = in.readInt();
+		this.numOfConnections = in.readUTF();
 		this.industry = in.readUTF();
 		this.location = in.readUTF();
 		int count = in.readInt(); //skill count
@@ -146,7 +151,7 @@ public class UserProfile implements WritableComparable<UserProfile> {
 		
 		out.writeUTF(this.firstName);
 		out.writeUTF(this.lastName);
-		out.writeInt(this.numOfConnections);
+		out.writeUTF(this.numOfConnections);
 		out.writeUTF(this.industry);
 		out.writeUTF(this.location);
 		out.writeInt(this.skillSet.size()); //skill count
