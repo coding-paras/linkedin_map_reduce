@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang.builder.CompareToBuilder;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.hadoop.io.WritableComparable;
 
 /**
@@ -113,20 +116,115 @@ public class UserProfile implements WritableComparable<UserProfile> {
 		this.positions = positions;
 	}
 
+	@Override
 	public void readFields(DataInput in) throws IOException {
-		// TODO Auto-generated method stub
 		
+		this.firstName = in.readUTF();
+		this.lastName = in.readUTF();
+		this.numOfConnections = in.readInt();
+		this.industry = in.readUTF();
+		this.location = in.readUTF();
+		int count = in.readInt(); //skill count
+		skillSet.clear();
+		for (int i = 0; i < count; i++) {
+
+			skillSet.add(in.readUTF());
+		}
+		positions.clear();
+		count = in.readInt(); //Position count
+		Position position = null;
+		for (int i = 0; i < count; i++) {
+
+			position = new Position();
+			position.readFields(in);
+			positions.add(position);
+		}
 	}
 
+	@Override
 	public void write(DataOutput out) throws IOException {
-		// TODO Auto-generated method stub
 		
+		out.writeUTF(this.firstName);
+		out.writeUTF(this.lastName);
+		out.writeInt(this.numOfConnections);
+		out.writeUTF(this.industry);
+		out.writeUTF(this.location);
+		out.writeInt(this.skillSet.size()); //skill count
+		for(String skill : this.skillSet) {
+			
+			out.writeUTF(skill);
+		}
+		out.writeInt(this.positions.size()); //position count
+		for (Position position : this.positions) {
+
+			position.write(out);
+		}
 	}
 
+	@Override
 	public int compareTo(UserProfile o) {
-		// TODO Auto-generated method stub
-		return 0;
+		
+		UserProfile that = (UserProfile) o;
+		return new CompareToBuilder()
+		.append(this.firstName, that.firstName)
+		.append(this.lastName, that.lastName)
+		.append(this.numOfConnections, that.numOfConnections)
+		.append(this.industry, that.industry)
+		.append(this.location, that.location)
+		.append(this.skillSet, that.skillSet)
+		.append(this.positions, that.positions)
+		.toComparison();
 	}
 
-
+	@Override
+	public boolean equals(Object obj) {
+		
+		if (obj == null || obj.getClass() != getClass()) {
+			
+			return false;
+		}
+		if (obj == this) { return true; }
+		UserProfile that = (UserProfile) obj;
+		return new EqualsBuilder()
+		.appendSuper(super.equals(obj))
+		.append(this.firstName, that.firstName)
+		.append(this.lastName, that.lastName)
+		.append(this.numOfConnections, that.numOfConnections)
+		.append(this.industry, that.industry)
+		.append(this.location, that.location)
+		.append(this.skillSet, that.skillSet)
+		.append(this.positions, that.positions)
+		.isEquals();
+	}
+	
+	@Override
+	public int hashCode() {
+		
+		return new HashCodeBuilder(17, 37)
+		.append(this.firstName)
+		.append(this.lastName)
+		.append(this.numOfConnections)
+		.append(this.industry)
+		.append(this.location)
+		.append(this.skillSet)
+		.append(this.positions)
+		.toHashCode();
+	}
+	
+	@Override
+	public String toString() {
+		
+		StringBuilder stringBuilder = new StringBuilder();
+		
+		stringBuilder.append(this.getClass().getName()).append(":").append("{");
+		stringBuilder.append("First Name: ").append(this.firstName).append(", ");
+		stringBuilder.append("Last Name: ").append(this.lastName).append(", ");
+		stringBuilder.append("Number of Connections: ").append(this.numOfConnections).append(", ");
+		stringBuilder.append("Industry: ").append(this.industry).append(", ");
+		stringBuilder.append("Location: ").append(this.location).append(", ");
+		stringBuilder.append("Skills Set: ").append("[").append(this.skillSet).append("]").append(", ");
+		stringBuilder.append("Positions: ").append("[").append(this.positions).append("]").append("}");
+		
+		return stringBuilder.toString();
+	}
 }
