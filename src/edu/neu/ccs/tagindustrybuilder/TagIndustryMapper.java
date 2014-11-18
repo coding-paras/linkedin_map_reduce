@@ -24,7 +24,7 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 
 	private Gson gson;
 	private Type userProfileListType;
-	
+
 	private static Logger logger = Logger.getLogger(TagIndustryMapper.class);
 
 	/**
@@ -32,7 +32,7 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 	 */
 	@Override
 	protected void setup(Context context) throws IOException,
-			InterruptedException {
+	InterruptedException {
 		super.setup(context);
 		gson = new Gson();
 		userProfileListType = new TypeToken<List<UserProfile>>() {}.getType();
@@ -46,11 +46,7 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 	protected void map(Object key, Text value, Context context)
 			throws IOException, InterruptedException {
 
-		String intermediateString = gson.toJson(value.toString(),
-				userProfileListType);
-
-		// De-serializing using Gson
-		List<UserProfile> userProfileList = gson.fromJson(intermediateString,
+		List<UserProfile> userProfileList = gson.fromJson(value.toString(),
 				userProfileListType);
 
 		String industry = null;
@@ -110,25 +106,31 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 
 		try {
 			int startYear = Integer.parseInt(startDate.split(Constants.DATE_SPLITTER)[0]);
+			//considering only the data after START_YEAR of records
+			startYear = (startYear < Constants.START_YEAR ? Constants.START_YEAR : startYear);
+
+			//calculating the endYear
 			int endYear;
 			if (position.isCurrent()) {
-				
+
 				endYear = Constants.END_YEAR;
 			} else if (endDate == null || endDate.trim().isEmpty()) {
-				
+
 				return;
 			} else {
-				
+
 				endYear = Integer.parseInt(endDate.split(Constants.DATE_SPLITTER)[0]);
 			}
 
+			//incrementing the relevant counters
 			for (int i = startYear; i <= endYear; i++) {
+
 				context.getCounter(Constants.YEAR_COUNTER_GRP, String.valueOf(i))
-						.increment(1);
+				.increment(1);
 
 			}
 		} catch (NumberFormatException nfe) {
-			
+
 			logger.error(nfe.getMessage());
 		}
 	}
