@@ -108,6 +108,7 @@ public class Position implements WritableComparable<Position> {
 		this.sector = sector;
 	}
 
+	@Override
 	public void readFields(DataInput dataInput) throws IOException {
 		this.summary = dataInput.readUTF();
 		this.title = dataInput.readUTF();
@@ -118,6 +119,7 @@ public class Position implements WritableComparable<Position> {
 		this.sector = dataInput.readUTF();
 	}
 
+	@Override
 	public void write(DataOutput dataOutput) throws IOException {
 		dataOutput.writeUTF(summary);
 		dataOutput.writeUTF(title);
@@ -129,6 +131,7 @@ public class Position implements WritableComparable<Position> {
 
 	}
 
+	@Override
 	public int compareTo(Position otherPosition) {
 		return new CompareToBuilder()
 				.append(this.summary, otherPosition.summary)
