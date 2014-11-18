@@ -4,10 +4,13 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
+
+import edu.neu.ccs.constants.Constants;
 
 /**
  * Job 1 that emits (tag,[industry1, industry2,....]) pair representing the
@@ -42,6 +45,15 @@ public class TagIndustryJobRunner {
 		FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
 		FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
 
-		System.exit(job.waitForCompletion(true) ? 0 : 1);
+		//Displaying the counters and their values
+		if (job.waitForCompletion(true)) {
+			
+			for (Counter counter : job.getCounters().getGroup(Constants.YEAR_COUNTER_GRP)) {
+				
+				System.out.println(counter.getName() + "-" + counter.getValue());
+			}
+		}
+		
+		
 	}
 }

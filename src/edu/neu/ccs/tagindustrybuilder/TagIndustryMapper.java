@@ -6,10 +6,12 @@ import java.util.List;
 
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.log4j.Logger;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import edu.neu.ccs.constants.Constants;
 import edu.neu.ccs.objects.Position;
 import edu.neu.ccs.objects.UserProfile;
 
@@ -20,12 +22,10 @@ import edu.neu.ccs.objects.UserProfile;
  */
 public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 
-	private static final String DATE_SPLITTER = "-";
-	private static final int END_YEAR = 2012;
-	private static final String YEAR_COUNTER_GROUP = "YEAR";
-
 	private Gson gson;
 	private Type userProfileListType;
+	
+	private static Logger logger = Logger.getLogger(TagIndustryMapper.class);
 
 	/**
 	 * Initializing Gson, setting up type for de-serializing.
@@ -35,8 +35,7 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 			InterruptedException {
 		super.setup(context);
 		gson = new Gson();
-		userProfileListType = new TypeToken<List<UserProfile>>() {
-		}.getType();
+		userProfileListType = new TypeToken<List<UserProfile>>() {}.getType();
 	}
 
 	/**
@@ -110,21 +109,27 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 		}
 
 		try {
-			int startYear = Integer.parseInt(startDate.split(DATE_SPLITTER)[0]);
+			int startYear = Integer.parseInt(startDate.split(Constants.DATE_SPLITTER)[0]);
 			int endYear;
-			if (endDate == null || endDate.trim().isEmpty()) {
-				endYear = END_YEAR;
+			if (position.isCurrent()) {
+				
+				endYear = Constants.END_YEAR;
+			} else if (endDate == null || endDate.trim().isEmpty()) {
+				
+				return;
 			} else {
-				endYear = Integer.parseInt(endDate.split(DATE_SPLITTER)[0]);
+				
+				endYear = Integer.parseInt(endDate.split(Constants.DATE_SPLITTER)[0]);
 			}
 
 			for (int i = startYear; i <= endYear; i++) {
-				context.getCounter(YEAR_COUNTER_GROUP, String.valueOf(i))
+				context.getCounter(Constants.YEAR_COUNTER_GRP, String.valueOf(i))
 						.increment(1);
 
 			}
-		} catch (NumberFormatException numberFormatException) {
-			return;
+		} catch (NumberFormatException nfe) {
+			
+			logger.error(nfe.getMessage());
 		}
 	}
 
