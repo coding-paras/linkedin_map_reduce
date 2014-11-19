@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.MalformedJsonException;
 
 import edu.neu.ccs.constants.Constants;
 import edu.neu.ccs.objects.Position;
@@ -45,19 +46,30 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 	@Override
 	protected void map(Object key, Text value, Context context)
 			throws IOException, InterruptedException {
+		
+		try
+		{
+			List<UserProfile> userProfileList = gson.fromJson(value.toString(),
+					userProfileListType);
+			
+			String industry = null;
 
-		List<UserProfile> userProfileList = gson.fromJson(value.toString(),
-				userProfileListType);
-
-		String industry = null;
-
-		for (UserProfile userProfile : userProfileList) {
-			industry = userProfile.getIndustry();
-			if (industry != null && !industry.trim().isEmpty()) {
-				emitSkillTags(userProfile.getSkillSet(), industry, context);
-				emitTitleTags(userProfile.getPositions(), industry, context);
+			for (UserProfile userProfile : userProfileList) {
+				industry = userProfile.getIndustry();
+				if (industry != null && !industry.trim().isEmpty()) {
+					emitSkillTags(userProfile.getSkillSet(), industry, context);
+					emitTitleTags(userProfile.getPositions(), industry, context);
+				}
 			}
 		}
+		catch(MalformedJsonException mje)
+		{
+			logger.error(mje);
+			return;
+		}
+
+
+
 	}
 
 	/**
