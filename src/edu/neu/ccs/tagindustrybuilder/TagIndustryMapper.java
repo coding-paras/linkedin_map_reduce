@@ -9,8 +9,8 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.log4j.Logger;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.MalformedJsonException;
 
 import edu.neu.ccs.constants.Constants;
 import edu.neu.ccs.objects.Position;
@@ -62,9 +62,9 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 				}
 			}
 		}
-		catch(MalformedJsonException mje)
+		catch(JsonSyntaxException jse)
 		{
-			logger.error(mje);
+			logger.error(jse);
 			return;
 		}
 
