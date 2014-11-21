@@ -49,17 +49,23 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 		
 		try
 		{
+			if (value.toString().trim().isEmpty()) {
+				return;
+			}
+			
 			List<UserProfile> userProfileList = gson.fromJson(value.toString(),
 					userProfileListType);
 			
 			String industry = null;
-
-			for (UserProfile userProfile : userProfileList) {
-				industry = userProfile.getIndustry();
-				if (industry != null && !industry.trim().isEmpty()) {
-					emitSkillTags(userProfile.getSkillSet(), industry, context);
-					emitTitleTags(userProfile.getPositions(), industry, context);
-				}
+			
+			if (userProfileList != null) {				
+				for (UserProfile userProfile : userProfileList) {
+					industry = userProfile.getIndustry();
+					if (industry != null && !industry.trim().isEmpty()) {
+						emitSkillTags(userProfile.getSkillSet(), industry, context);
+						emitTitleTags(userProfile.getPositions(), industry, context);
+					}
+				}				
 			}
 		}
 		catch(JsonSyntaxException jse)
