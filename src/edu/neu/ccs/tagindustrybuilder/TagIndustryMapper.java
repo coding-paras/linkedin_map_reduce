@@ -52,20 +52,28 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 			if (value.toString().trim().isEmpty()) {
 				return;
 			}
-			
+
 			List<UserProfile> userProfileList = gson.fromJson(value.toString(),
 					userProfileListType);
-			
+
 			String industry = null;
-			
-			if (userProfileList != null) {				
-				for (UserProfile userProfile : userProfileList) {
-					industry = userProfile.getIndustry();
-					if (industry != null && !industry.trim().isEmpty()) {
-						emitSkillTags(userProfile.getSkillSet(), industry, context);
-						emitTitleTags(userProfile.getPositions(), industry, context);
-					}
-				}				
+
+			if (userProfileList == null) {
+				return;
+			}
+
+			for (UserProfile userProfile : userProfileList) {
+				industry = userProfile.getIndustry();
+				if (industry == null || industry.trim().isEmpty()) {
+
+					continue;
+				}
+				industry = filterTag(industry);
+
+				if (!industry.trim().isEmpty()) {
+					emitSkillTags(userProfile.getSkillSet(), industry, context);
+					emitTitleTags(userProfile.getPositions(), industry, context);
+				}
 			}
 		}
 		catch(JsonSyntaxException jse)
@@ -99,11 +107,26 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 			title = position.getTitle();
 
 			if (title != null && !title.trim().isEmpty()) {
-				context.write(new Text(title), new Text(industry));
+				title = filterTag(title);
+				if (!title.trim().isEmpty()) {
+					context.write(new Text(title), new Text(industry));
+				}
 			}
-
 			increaseYearCounters(position, context);
 		}
+	}
+	
+	/**
+	 * Filtering the given tag.
+	 * @param tag
+	 * @return
+	 */
+	private String filterTag(String tag) {	
+		if (tag == null) {
+			return "";
+		}
+		tag = tag.replaceAll("[^\\w ]", "").trim();
+		return tag;
 	}
 
 	/**
@@ -164,13 +187,16 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 	 */
 	private void emitSkillTags(List<String> skillSet, String industry,
 			Context context) throws IOException, InterruptedException {
-
+		
 		if (skillSet == null) {
 			return;
 		}
 
 		for (String skill : skillSet) {
-			context.write(new Text(skill), new Text(industry));
+			skill = filterTag(skill);
+			if (!skill.trim().isEmpty()) {
+				context.write(new Text(skill), new Text(industry));
+			}
 		}
 	}
 }
