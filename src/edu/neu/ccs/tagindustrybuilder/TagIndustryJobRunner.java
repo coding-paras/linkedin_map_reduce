@@ -8,6 +8,8 @@ import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
 import edu.neu.ccs.constants.Constants;
@@ -25,7 +27,7 @@ public class TagIndustryJobRunner {
 				.getRemainingArgs();
 
 		if (otherArgs.length != 2) {
-			System.err.println("Usage: tagindustry <in> <out>");
+			System.err.println("Usage: 	tagindustry <in> <out>");
 			System.exit(2);
 		}
 		
@@ -38,8 +40,10 @@ public class TagIndustryJobRunner {
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(Text.class);
 		
-		job.setOutputKeyClass(NullWritable.class);
-		job.setOutputValueClass(Text.class);
+		MultipleOutputs.addNamedOutput(job, "tagindustry", TextOutputFormat.class, NullWritable.class, Text.class);
+		MultipleOutputs.addNamedOutput(job, "industries", TextOutputFormat.class, NullWritable.class, Text.class);
+		MultipleOutputs.addNamedOutput(job, "location", TextOutputFormat.class, NullWritable.class, Text.class);
+
 		// Setting number of reduce tasks to 10
 		job.setNumReduceTasks(10);
 		FileInputFormat.addInputPath(job, new Path(otherArgs[0]));

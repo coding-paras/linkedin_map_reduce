@@ -57,12 +57,19 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 					userProfileListType);
 
 			String industry = null;
-
+			String location = null;
 			if (userProfileList == null) {
 				return;
 			}
 
 			for (UserProfile userProfile : userProfileList) {
+				
+				location = userProfile.getLocation();
+				if (location != null && !location.trim().isEmpty()) {
+
+					context.write(new Text(location + Constants.COMMA + Constants.UNIQUE_LOCTIONS_KEY_TAG), new Text(""));
+				}
+				
 				industry = userProfile.getIndustry();
 				if (industry == null || industry.trim().isEmpty()) {
 
@@ -71,6 +78,7 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 				industry = filterTag(industry);
 
 				if (!industry.trim().isEmpty()) {
+					context.write(new Text(industry + Constants.COMMA + Constants.UNIQUE_INDUSTRIES_KEY_TAG), new Text(""));
 					emitSkillTags(userProfile.getSkillSet(), industry, context);
 					emitTitleTags(userProfile.getPositions(), industry, context);
 				}
