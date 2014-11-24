@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
 
+import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.log4j.Logger;
@@ -25,6 +27,7 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 
 	private Gson gson;
 	private Type userProfileListType;
+	private Path[] localFiles;
 
 	private static Logger logger = Logger.getLogger(TagIndustryMapper.class);
 
@@ -37,6 +40,7 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 		super.setup(context);
 		gson = new Gson();
 		userProfileListType = new TypeToken<List<UserProfile>>() {}.getType();
+		localFiles = DistributedCache.getLocalCacheFiles(context.getConfiguration());
 	}
 
 	/**
@@ -57,19 +61,12 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 					userProfileListType);
 
 			String industry = null;
-			String location = null;
 			if (userProfileList == null) {
 				return;
 			}
 
 			for (UserProfile userProfile : userProfileList) {
-				
-				location = userProfile.getLocation();
-				if (location != null && !location.trim().isEmpty()) {
-
-					context.write(new Text(location + Constants.COMMA + Constants.UNIQUE_LOCTIONS_KEY_TAG), new Text(""));
-				}
-				
+					
 				industry = userProfile.getIndustry();
 				if (industry == null || industry.trim().isEmpty()) {
 
@@ -78,7 +75,7 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 				industry = filterTag(industry);
 
 				if (!industry.trim().isEmpty()) {
-					context.write(new Text(industry + Constants.COMMA + Constants.UNIQUE_INDUSTRIES_KEY_TAG), new Text(""));
+					industry = getAppropriateSector(industry);
 					emitSkillTags(userProfile.getSkillSet(), industry, context);
 					emitTitleTags(userProfile.getPositions(), industry, context);
 				}
@@ -92,6 +89,11 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 
 
 
+	}
+
+	private String getAppropriateSector(String industry) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	/**
@@ -117,6 +119,7 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 			if (title != null && !title.trim().isEmpty()) {
 				title = filterTag(title);
 				if (!title.trim().isEmpty()) {
+					context.write(new Text(industry + Constants.COMMA + Constants.UNIQUE_INDUSTRIES_KEY_TAG), new Text(title));
 					context.write(new Text(title), new Text(industry));
 				}
 			}
@@ -203,6 +206,7 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 		for (String skill : skillSet) {
 			skill = filterTag(skill);
 			if (!skill.trim().isEmpty()) {
+				context.write(new Text(industry + Constants.COMMA + Constants.UNIQUE_INDUSTRIES_KEY_TAG), new Text(skill));
 				context.write(new Text(skill), new Text(industry));
 			}
 		}

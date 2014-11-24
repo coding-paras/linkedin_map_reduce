@@ -1,6 +1,9 @@
 package edu.neu.ccs.tagindustrybuilder;
 
+import java.net.URI;
+
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
@@ -26,8 +29,8 @@ public class TagIndustryJobRunner {
 		String[] otherArgs = new GenericOptionsParser(conf, args)
 				.getRemainingArgs();
 
-		if (otherArgs.length != 2) {
-			System.err.println("Usage: 	tagindustry <in> <out>");
+		if (otherArgs.length != 3) {
+			System.err.println("Usage: 	tagindustry <in> <out> <cache>");
 			System.exit(2);
 		}
 		
@@ -41,11 +44,11 @@ public class TagIndustryJobRunner {
 		job.setMapOutputValueClass(Text.class);
 		
 		MultipleOutputs.addNamedOutput(job, "tagindustry", TextOutputFormat.class, NullWritable.class, Text.class);
-		MultipleOutputs.addNamedOutput(job, "industries", TextOutputFormat.class, NullWritable.class, Text.class);
-		MultipleOutputs.addNamedOutput(job, "location", TextOutputFormat.class, NullWritable.class, Text.class);
-
-		// Setting number of reduce tasks to 10
-		job.setNumReduceTasks(10);
+		MultipleOutputs.addNamedOutput(job, "topskills", TextOutputFormat.class, NullWritable.class, Text.class);
+		
+		// Setting distributed cache of sectors.
+		DistributedCache.addCacheFile(new URI(otherArgs[2]), conf);
+		
 		FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
 		FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
 
