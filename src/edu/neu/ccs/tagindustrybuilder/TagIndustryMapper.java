@@ -1,8 +1,12 @@
 package edu.neu.ccs.tagindustrybuilder;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.Path;
@@ -27,7 +31,7 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 
 	private Gson gson;
 	private Type userProfileListType;
-	private Path[] localFiles;
+	private Map<String, String> industryToSector;
 
 	private static Logger logger = Logger.getLogger(TagIndustryMapper.class);
 
@@ -40,7 +44,42 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 		super.setup(context);
 		gson = new Gson();
 		userProfileListType = new TypeToken<List<UserProfile>>() {}.getType();
-		localFiles = DistributedCache.getLocalCacheFiles(context.getConfiguration());
+		setupIndustryToSector(context);
+	}
+	
+	/**
+	 * Reads the industry to sector mapping file from distributed cache and
+	 * populates a {@link Map}
+	 * 
+	 * @param context
+	 * @throws IOException
+	 */
+	private void setupIndustryToSector(Context context) throws IOException {
+
+		industryToSector = new HashMap<String, String>();
+
+		Path[] localFiles = DistributedCache.getLocalCacheFiles(context
+				.getConfiguration());
+		
+		if (localFiles == null) {
+			return;
+		}
+		for (Path path : localFiles) {
+			// TODO
+			if ("".equals(path.getName())) {
+				BufferedReader bufferedReader = new BufferedReader(new FileReader(
+						path.toString()));
+
+				String line = null;
+				String words[] = null;
+				while ((line = bufferedReader.readLine()) != null) {
+					words = line.split(Constants.COMMA);
+					industryToSector.put(words[0], words[1]);
+				}
+				bufferedReader.close();				
+			}
+		}
+
 	}
 
 	/**
@@ -73,9 +112,9 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 					continue;
 				}
 				industry = filterTag(industry);
-
+				
 				if (!industry.trim().isEmpty()) {
-					industry = getAppropriateSector(industry);
+					industry = industryToSector.get(industry);
 					emitSkillTags(userProfile.getSkillSet(), industry, context);
 					emitTitleTags(userProfile.getPositions(), industry, context);
 				}
@@ -89,11 +128,6 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 
 
 
-	}
-
-	private String getAppropriateSector(String industry) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	/**

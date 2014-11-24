@@ -46,11 +46,11 @@ public class TagIndustryJobRunner {
 		MultipleOutputs.addNamedOutput(job, "tagindustry", TextOutputFormat.class, NullWritable.class, Text.class);
 		MultipleOutputs.addNamedOutput(job, "topskills", TextOutputFormat.class, NullWritable.class, Text.class);
 		
-		// Setting distributed cache of sectors.
-		DistributedCache.addCacheFile(new URI(otherArgs[2]), conf);
-		
 		FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
 		FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
+		
+		// Setting distributed cache of industry to sector mapping.
+		DistributedCache.addCacheFile(new URI(otherArgs[2]), job.getConfiguration());
 
 		//Displaying the counters and their values
 		if (job.waitForCompletion(true)) {
