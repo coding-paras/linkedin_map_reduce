@@ -120,7 +120,7 @@ public class TagIndustryReducer extends Reducer<Text, Text, NullWritable, Text> 
 		buffer.append(industry).append(Constants.COMMA);
 
 		for (int i = 0; i < numberOfSkills; i++) {
-			buffer.append(skillsList.get(i)).append(Constants.COMMA);
+			buffer.append(skillsList.get(i).getKey()).append(Constants.COMMA);
 
 		}
 
