@@ -9,4 +9,9 @@ public class Constants {
 	public static final int START_YEAR = 1980;
 	public static final String UNIQUE_INDUSTRIES_KEY_TAG = "UI";
 	public static final String YEAR_COUNTER_GRP = "YEAR";
+	
+	// JOB 1 output names
+	public static final String TAG_INDUSTRY = "tagindustry";
+	public static final String TOP_TAGS = "toptags";
+	
 }

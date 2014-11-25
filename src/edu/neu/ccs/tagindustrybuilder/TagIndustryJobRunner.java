@@ -1,9 +1,6 @@
 package edu.neu.ccs.tagindustrybuilder;
 
-import java.net.URI;
-
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
@@ -29,8 +26,8 @@ public class TagIndustryJobRunner {
 		String[] otherArgs = new GenericOptionsParser(conf, args)
 				.getRemainingArgs();
 
-		if (otherArgs.length != 3) {
-			System.err.println("Usage: 	tagindustry <in> <out> <cache>");
+		if (otherArgs.length != 2) {
+			System.err.println("Usage: 	tagindustry <in> <out>");
 			System.exit(2);
 		}
 		
@@ -43,14 +40,11 @@ public class TagIndustryJobRunner {
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(Text.class);
 		
-		MultipleOutputs.addNamedOutput(job, "tagindustry", TextOutputFormat.class, NullWritable.class, Text.class);
-		MultipleOutputs.addNamedOutput(job, "topskills", TextOutputFormat.class, NullWritable.class, Text.class);
+		MultipleOutputs.addNamedOutput(job, Constants.TAG_INDUSTRY, TextOutputFormat.class, NullWritable.class, Text.class);
+		MultipleOutputs.addNamedOutput(job, Constants.TOP_TAGS, TextOutputFormat.class, NullWritable.class, Text.class);
 		
 		FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
 		FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
-		
-		// Setting distributed cache of industry to sector mapping.
-		DistributedCache.addCacheFile(new URI(otherArgs[2]), job.getConfiguration());
 
 		//Displaying the counters and their values
 		if (job.waitForCompletion(true)) {
@@ -59,8 +53,6 @@ public class TagIndustryJobRunner {
 				
 				System.out.println(counter.getName() + "-" + counter.getValue());
 			}
-		}
-		
-		
+		}		
 	}
 }

@@ -58,7 +58,7 @@ public class TagIndustryReducer extends Reducer<Text, Text, NullWritable, Text> 
 		}
 
 		// Value contains the tag,value_list as a comma separated string
-		multipleOutputs.write("tagindustry", NullWritable.get(), new Text(
+		multipleOutputs.write(Constants.TAG_INDUSTRY, NullWritable.get(), new Text(
 				buffer.toString().substring(0, buffer.length() - 1)));
 
 		// Clearing buffer
@@ -125,7 +125,7 @@ public class TagIndustryReducer extends Reducer<Text, Text, NullWritable, Text> 
 		}
 
 		// Value contains the tag,value_list as a comma separated string
-		multipleOutputs.write("topskills", NullWritable.get(), new Text(
+		multipleOutputs.write(Constants.TOP_TAGS, NullWritable.get(), new Text(
 				buffer.toString().substring(0, buffer.length() - 1)));
 
 		// Clearing buffer
