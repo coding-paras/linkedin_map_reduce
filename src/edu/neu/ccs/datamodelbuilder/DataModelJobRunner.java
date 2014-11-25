@@ -1,9 +1,14 @@
 package edu.neu.ccs.datamodelbuilder;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.InputStreamReader;
 import java.net.URI;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
@@ -24,7 +29,7 @@ public class DataModelJobRunner {
 		.getRemainingArgs();
 
 		if (otherArgs.length != 4) {
-			System.err.println("Usage: datamodelbuilder <in> <out> <cache> <output_job1>");
+			System.err.println("Usage: datamodelbuilder <in> <out> <cache> <output_job1_folder>");
 			System.exit(4);
 		}
 
@@ -46,10 +51,40 @@ public class DataModelJobRunner {
 		// Setting distributed cache of industry to sector mapping.
 		DistributedCache.addCacheFile(new URI(otherArgs[2]), job.getConfiguration());
 		
-		conf.set(Constants.INDUSTRY_SECTOR_FILE, otherArgs[2]); //DistributedCache filename
+		job.getConfiguration().set(Constants.INDUSTRY_SECTOR_FILE, otherArgs[2]); //DistributedCache filename
 		
 		//Distributed Cache - HDFS Output from Job1
-		
+		FileSystem fs = FileSystem.get(job.getConfiguration());
+		FileStatus[] status = fs.listStatus(new Path(otherArgs[3]));
+	
+		BufferedWriter tagIndustryWriter = new BufferedWriter(new FileWriter(Constants.TAG_INDUSTRY_FILE));
+		BufferedWriter top5TagsPerIndustryWriter = new BufferedWriter(new FileWriter(Constants.TOP_5TAGS_INDUSTRY));
+		BufferedWriter bufferedWriter = null;
+		BufferedReader bufferedReader = null;
+		Path filePath = null;
+		for (int i=0;i<status.length;i++){
+			
+			filePath = status[i].getPath();
+			bufferedReader = new BufferedReader(new InputStreamReader(fs.open(filePath)));
+			
+			if (filePath.getName().contains(Constants.TAG_INDUSTRY)) {
+				
+				bufferedWriter = tagIndustryWriter;
+			} else if (filePath.getName().contains(Constants.TOP_TAGS)) {
+				
+				bufferedWriter = top5TagsPerIndustryWriter;
+			}
+			String line;
+			while ((line=bufferedReader.readLine()) != null){
+				
+				bufferedWriter.write(line);
+				bufferedWriter.write("\n");
+			}
+			bufferedReader.close();
+			//System.out.println(status[i].getPath().getName());
+		}
+		tagIndustryWriter.close();
+		top5TagsPerIndustryWriter.close();
 		
 		//Displaying the counters and their values
 		System.exit(job.waitForCompletion(true) ? 0 : 1);

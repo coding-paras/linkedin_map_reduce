@@ -27,6 +27,7 @@ public class TagIndustryJobRunner {
 				.getRemainingArgs();
 
 		if (otherArgs.length != 2) {
+
 			System.err.println("Usage: 	tagindustry <in> <out>");
 			System.exit(2);
 		}
