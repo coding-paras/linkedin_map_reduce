@@ -43,6 +43,7 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 		
 		tagIndustriesFile = Constants.TAG_INDUSTRY_FILE + System.currentTimeMillis();
 		FileSystem.get(context.getConfiguration()).copyToLocalFile(new Path(Constants.TAG_INDUSTRY_FILE), new Path(tagIndustriesFile));
+
 		UtilHelper.populateKeyValues(tagToIndustries, tagIndustriesFile);
 		
 		populateIndustryToSector(context);

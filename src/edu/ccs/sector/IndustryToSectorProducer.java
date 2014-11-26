@@ -17,9 +17,13 @@ import org.apache.commons.io.FileUtils;
 
 public class IndustryToSectorProducer {
 	
+	private static int count;
+	
 	public static void main(String[] args) throws IOException {
 		
+		count = 0;
 		new IndustryToSectorProducer().getSectors(args[0]);		
+		System.out.println(count);
 	}
 
 	public void getSectors(String folder) throws IOException {
@@ -60,6 +64,7 @@ public class IndustryToSectorProducer {
 		String words[] = null;
 				
 		while ((line = bufferedReader.readLine()) != null) {
+			count++;
 			
 			words = line.split(" ");
 			

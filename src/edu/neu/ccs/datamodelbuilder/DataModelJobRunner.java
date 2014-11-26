@@ -2,9 +2,18 @@ package edu.neu.ccs.datamodelbuilder;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
@@ -58,12 +67,16 @@ public class DataModelJobRunner {
 		//Distributed Cache - HDFS Output from Job1
 		FileSystem fs = FileSystem.get(job.getConfiguration());
 		FileStatus[] status = fs.listStatus(new Path(otherArgs[3]));
+		
+		Map<String, String> industryToSector = populateIndustryToSector(job.getConfiguration());
+		Map<String, Map<String, Integer>> topTagsSector = new HashMap<String, Map<String, Integer>>();
 	
 		BufferedWriter tagIndustryWriter = new BufferedWriter(new FileWriter(Constants.TAG_INDUSTRY_FILE));
-		BufferedWriter top5TagsPerIndustryWriter = new BufferedWriter(new FileWriter(Constants.TOP_TAGS_SECTOR));
-		BufferedWriter bufferedWriter = null;
+
 		BufferedReader bufferedReader = null;
 		Path filePath = null;
+		Map<String, Integer> tags;
+		
 		for (int i=0;i<status.length;i++){
 			
 			filePath = status[i].getPath();
@@ -71,24 +84,144 @@ public class DataModelJobRunner {
 			
 			if (filePath.getName().contains(Constants.TAG_INDUSTRY)) {
 				
-				bufferedWriter = tagIndustryWriter;
+				String line;
+				while ((line=bufferedReader.readLine()) != null){
+					
+					tagIndustryWriter.write(line);
+					tagIndustryWriter.write("\n");
+				}
+				bufferedReader.close();
+				
 			} else if (filePath.getName().contains(Constants.TOP_TAGS)) {
 				
-				bufferedWriter = top5TagsPerIndustryWriter;
+				String line;
+				String values[];
+				while ((line=bufferedReader.readLine()) != null){
+					
+					values = line.split(Constants.COMMA);
+					
+					String sector = industryToSector.get(values[0]);
+					
+					if (sector ==  null) {
+						continue;
+					}
+					
+					tags = topTagsSector.get(sector);
+					
+					if (tags == null) {
+						tags = new HashMap<String, Integer>();
+						topTagsSector.put(sector, tags);
+					}
+					
+					for (int j = 1; j < values.length; j++) {
+						String tag = values[j];
+						int count = 1;
+						if (tags.get(tag) != null) {
+							count = tags.get(tag) + 1;
+						}
+						tags.put(tag, count);				
+					}
+				}
+				bufferedReader.close();
 			}
-			String line;
-			while ((line=bufferedReader.readLine()) != null){
-				
-				bufferedWriter.write(line);
-				bufferedWriter.write("\n");
-			}
-			bufferedReader.close();
 		}
+		
 		tagIndustryWriter.close();
-		top5TagsPerIndustryWriter.close();
+		
+		createTopIndustriesFile(topTagsSector);
 		
 		//Displaying the counters and their values
 		System.exit(job.waitForCompletion(true) ? 0 : 1);
+	}
+	
+	private static void createTopIndustriesFile(Map<String, Map<String, Integer>> topTagsSector) throws IOException {
+		BufferedWriter tagSectorWriter = new BufferedWriter(new FileWriter(
+				Constants.TOP_TAGS_SECTOR));
+
+		Map<String, Integer> tags = null;
+		List<Map.Entry<String, Integer>> topTags = new ArrayList<Map.Entry<String, Integer>>();
+		
+		for (Map.Entry<String, Map<String, Integer>> entry : topTagsSector
+				.entrySet()) {
+
+			tags = entry.getValue();
+
+			topTags.addAll(tags.entrySet());
+
+			Collections.sort(topTags,
+					new Comparator<Map.Entry<String, Integer>>() {
+
+						@Override
+						public int compare(Entry<String, Integer> entry1,
+								Entry<String, Integer> entry2) {
+
+							return -entry1.getValue().compareTo(
+									entry2.getValue());
+						}
+					});
+
+			if (topTags.size() >= 5) {
+				writeTofile(entry.getKey(), tagSectorWriter, 5, topTags);
+			} else {
+				writeTofile(entry.getKey(), tagSectorWriter, topTags.size(), topTags);
+			}
+
+			topTags.clear();
+		}
+
+		tagSectorWriter.close();
+	}
+
+	private static void writeTofile(String sector, BufferedWriter tagSectorWriter, int numberOfSkills, List<Entry<String, Integer>> topTags) throws IOException {
+		
+		StringBuffer buffer = new StringBuffer();
+		buffer.append(sector).append(Constants.COMMA);
+		
+		for (int i = 0; i < numberOfSkills; i++) {
+			buffer.append(topTags.get(i).getKey()).append(Constants.COMMA);
+		}
+		
+		tagSectorWriter.write(buffer.toString().substring(0, buffer.length() - 1));
+		tagSectorWriter.write("\n");
+	}
+
+	/**
+	 * Reads the industry to sector mapping file from distributed cache and
+	 * populates a {@link Map}
+	 * 
+	 * @param configuration
+	 * @throws IOException
+	 */
+	private static Map<String, String> populateIndustryToSector(Configuration configuration) throws IOException {
+
+		Map<String, String> industryToSector = new HashMap<String, String>();
+
+		Path[] localFiles = DistributedCache.getLocalCacheFiles(configuration);
+
+		String industrySectorFile = configuration.get(Constants.INDUSTRY_SECTOR_FILE);
+		industrySectorFile = industrySectorFile.substring(industrySectorFile.lastIndexOf("/") + 1);
+
+		if (localFiles == null) {
+
+			throw new RuntimeException("DistributedCache not present in HDFS");
+		}
+
+		for (Path path : localFiles) {
+
+			if (industrySectorFile.equals(path.getName())) {
+
+				BufferedReader bufferedReader = new BufferedReader(new FileReader(path.toString()));
+
+				String line = null;
+				String words[] = null;
+				while ((line = bufferedReader.readLine()) != null) {
+					words = line.split(Constants.COMMA);
+					industryToSector.put(words[0], words[1]);
+				}
+				bufferedReader.close();				
+			}
+		}
+		return industryToSector;
 	}
 
 }
