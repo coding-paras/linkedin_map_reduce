@@ -218,7 +218,7 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 	private List<String> populateTags(UserProfile userProfile) {
 		List<String> tags = new ArrayList<String>();
 		
-		tags.addAll(tags);
+		tags.addAll(userProfile.getSkillSet());
 		
 		for(Position position: userProfile.getPositions())
 		{
