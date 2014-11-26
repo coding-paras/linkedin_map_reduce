@@ -142,15 +142,11 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 
 			for (UserProfile userProfile : userProfileList) {
 				
-				assignSector(userProfile);
-				
 				// Pruning
 				userProfile.setFirstName(null);
 				userProfile.setLastName(null);
 				userProfile.setIndustry(null);
-				
-				// Emitting pruned data
-				context.write(new Text(Constants.PRUNED_DATA), new Text(gson.toJson(userProfile)));
+				assignSector(userProfile, context);
 			}
 		} catch(JsonSyntaxException jse)	{
 			
@@ -160,9 +156,11 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 
 	}
 	
-	private void assignSector(UserProfile userProfile) {
+	private void assignSector(UserProfile userProfile, Context context) throws IOException, InterruptedException {
 		
 		String sector = null;
+		int finalStartYear = Integer.MAX_VALUE, finalEndYear = Integer.MIN_VALUE;
+		int startYear, endYear;
 		if (userProfile.getIndustry() == null || industryToSector.get(userProfile.getIndustry()) == null) {
 			
 			sector = getMaxSector(userProfile);
@@ -175,9 +173,30 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 			
 			position.setSector(sector);
 			
+			startYear = Integer.parseInt(position.getStartDate().split(Constants.DATE_SPLITTER)[0]);
+			endYear = Integer.parseInt(position.getEndDate().split(Constants.DATE_SPLITTER)[0]);
+			
+			if (startYear < finalStartYear) {
+				finalStartYear = startYear;
+			}
+			
+			if (endYear < finalEndYear) {
+				finalEndYear = endYear;
+			}
+			
 			// Pruning
 			position.setSummary(null);
 		}
+		
+		String userProfileInJson = gson.toJson(userProfile);
+		
+		for (int i = finalStartYear; i <= finalEndYear; i++) {		
+			// Emitting user profile for each year
+			context.write(new Text(i+Constants.COMMA+sector), new Text(userProfileInJson));
+		}
+		
+		// Emitting pruned data
+		context.write(new Text(Constants.PRUNED_DATA), new Text(userProfileInJson));
 	}
 	
 	private String getMaxSector(UserProfile userProfile) {
