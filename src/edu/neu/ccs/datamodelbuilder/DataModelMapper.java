@@ -24,15 +24,15 @@ import com.google.gson.reflect.TypeToken;
 import edu.neu.ccs.constants.Constants;
 import edu.neu.ccs.objects.Position;
 import edu.neu.ccs.objects.UserProfile;
+import edu.neu.ccs.util.UtilHelper;
 
 public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 
 	private static Logger logger = Logger.getLogger(DataModelMapper.class);
 	
 	private Map<String, String> industryToSector;
-	private Map<String, List<String>> tagToIndustries, topTagsPerIndustry;
+	private Map<String, List<String>> tagToIndustries;
 	private String tagIndustriesFile;
-	private String topTagsPerIndustryFile;
 	private Gson gson;
 	private Type userProfileListType;
 
@@ -43,47 +43,12 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 		
 		tagIndustriesFile = Constants.TAG_INDUSTRY_FILE + System.currentTimeMillis();
 		FileSystem.get(context.getConfiguration()).copyToLocalFile(new Path(Constants.TAG_INDUSTRY_FILE), new Path(tagIndustriesFile));
-		populateKeyValues(tagToIndustries, tagIndustriesFile);
-		
-		topTagsPerIndustryFile = Constants.TOP_5TAGS_INDUSTRY + System.currentTimeMillis();
-		FileSystem.get(context.getConfiguration()).copyToLocalFile(new Path(Constants.TOP_5TAGS_INDUSTRY), new Path(topTagsPerIndustryFile));
-		populateKeyValues(topTagsPerIndustry, topTagsPerIndustryFile);
+		UtilHelper.populateKeyValues(tagToIndustries, tagIndustriesFile);
 		
 		populateIndustryToSector(context);
 		
 		gson = new Gson();
 		userProfileListType = new TypeToken<List<UserProfile>>() {}.getType();
-	}
-
-	/**
-	 * 
-	 * @param map
-	 * @param fileName
-	 * @throws IOException
-	 */
-	private void populateKeyValues(Map<String, List<String>> map, String fileName) throws IOException {
-		
-		map = new HashMap<String, List<String>>();
-		
-		BufferedReader bufferedReader = new BufferedReader(new FileReader(fileName));
-		
-		String line;
-		String[] attributes = null;
-		List<String> values = null;
-		while((line = bufferedReader.readLine()) != null) {
-			
-			attributes = line.split(Constants.COMMA);
-			
-			values = new ArrayList<String>();
-			for (int i = 1; i < attributes.length; i++) {
-				
-				values.add(attributes[i]);
-			}
-			
-			map.put(attributes[0], values);
-		}
-		
-		bufferedReader.close();
 	}
 	
 	/**
@@ -140,16 +105,12 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 			}
 
 			for (UserProfile userProfile : userProfileList) {
-
-				assignSector(userProfile);
 				
 				// Pruning
 				userProfile.setFirstName(null);
 				userProfile.setLastName(null);
 				userProfile.setIndustry(null);
-				
-				// Emitting pruned data
-				context.write(new Text(Constants.PRUNED_DATA), new Text(gson.toJson(userProfile)));
+				assignSector(userProfile, context);
 			}
 		} catch(JsonSyntaxException jse)	{
 			
@@ -159,9 +120,11 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 
 	}
 	
-	private void assignSector(UserProfile userProfile) {
+	private void assignSector(UserProfile userProfile, Context context) throws IOException, InterruptedException {
 		
 		String sector = null;
+		int finalStartYear = Integer.MAX_VALUE, finalEndYear = Integer.MIN_VALUE;
+		int startYear, endYear;
 		if (userProfile.getIndustry() == null || industryToSector.get(userProfile.getIndustry()) == null) {
 			
 			sector = getMaxSector(userProfile);
@@ -174,8 +137,26 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 			
 			position.setSector(sector);
 			
+			startYear = Integer.parseInt(position.getStartDate().split(Constants.DATE_SPLITTER)[0]);
+			endYear = Integer.parseInt(position.getEndDate().split(Constants.DATE_SPLITTER)[0]);
+			
+			if (startYear < finalStartYear) {
+				finalStartYear = startYear;
+			}
+			
+			if (endYear < finalEndYear) {
+				finalEndYear = endYear;
+			}
+			
 			// Pruning
 			position.setSummary(null);
+		}
+		
+		String userProfileInJson = gson.toJson(userProfile);
+		
+		for (int i = finalStartYear; i <= finalEndYear; i++) {		
+			// Emitting user profile for each year
+			context.write(new Text(i+Constants.COMMA+sector), new Text(userProfileInJson));
 		}
 	}
 	
@@ -236,8 +217,6 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 		
 		super.cleanup(context);
 		
-		new File(tagIndustriesFile).delete();
-		new File(topTagsPerIndustryFile).delete();
-		
+		new File(tagIndustriesFile).delete();		
 	}
 }

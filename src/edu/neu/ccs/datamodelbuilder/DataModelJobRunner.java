@@ -16,6 +16,8 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
 import edu.neu.ccs.constants.Constants;
@@ -42,8 +44,8 @@ public class DataModelJobRunner {
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(Text.class);
 
-		job.setOutputKeyClass(NullWritable.class);
-		job.setOutputValueClass(Text.class);
+		MultipleOutputs.addNamedOutput(job, Constants.PRUNED_DATA_TAG, TextOutputFormat.class, NullWritable.class, Text.class);
+		MultipleOutputs.addNamedOutput(job, Constants.DATA_MODEL_TAG, TextOutputFormat.class, NullWritable.class, Text.class);
 		
 		FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
 		FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
@@ -58,7 +60,7 @@ public class DataModelJobRunner {
 		FileStatus[] status = fs.listStatus(new Path(otherArgs[3]));
 	
 		BufferedWriter tagIndustryWriter = new BufferedWriter(new FileWriter(Constants.TAG_INDUSTRY_FILE));
-		BufferedWriter top5TagsPerIndustryWriter = new BufferedWriter(new FileWriter(Constants.TOP_5TAGS_INDUSTRY));
+		BufferedWriter top5TagsPerIndustryWriter = new BufferedWriter(new FileWriter(Constants.TOP_TAGS_SECTOR));
 		BufferedWriter bufferedWriter = null;
 		BufferedReader bufferedReader = null;
 		Path filePath = null;
@@ -81,7 +83,6 @@ public class DataModelJobRunner {
 				bufferedWriter.write("\n");
 			}
 			bufferedReader.close();
-			//System.out.println(status[i].getPath().getName());
 		}
 		tagIndustryWriter.close();
 		top5TagsPerIndustryWriter.close();
