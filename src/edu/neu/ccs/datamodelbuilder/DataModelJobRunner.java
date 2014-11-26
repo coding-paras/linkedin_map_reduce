@@ -2,7 +2,6 @@ package edu.neu.ccs.datamodelbuilder;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -30,6 +29,8 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
 import edu.neu.ccs.constants.Constants;
+import edu.neu.ccs.objects.UserProfile;
+import edu.neu.ccs.util.UtilHelper;
 
 public class DataModelJobRunner {
 
@@ -51,7 +52,7 @@ public class DataModelJobRunner {
 		job.setReducerClass(DataModelReducer.class);
 
 		job.setMapOutputKeyClass(Text.class);
-		job.setMapOutputValueClass(Text.class);
+		job.setMapOutputValueClass(UserProfile.class);
 
 		MultipleOutputs.addNamedOutput(job, Constants.PRUNED_DATA_TAG, TextOutputFormat.class, NullWritable.class, Text.class);
 		MultipleOutputs.addNamedOutput(job, Constants.DATA_MODEL_TAG, TextOutputFormat.class, NullWritable.class, Text.class);
@@ -68,7 +69,7 @@ public class DataModelJobRunner {
 		FileSystem fs = FileSystem.get(job.getConfiguration());
 		FileStatus[] status = fs.listStatus(new Path(otherArgs[3]));
 		
-		Map<String, String> industryToSector = populateIndustryToSector(job.getConfiguration());
+		Map<String, String> industryToSector = UtilHelper.populateIndustryToSector(job.getConfiguration());
 		Map<String, Map<String, Integer>> topTagsSector = new HashMap<String, Map<String, Integer>>();
 	
 		BufferedWriter tagIndustryWriter = new BufferedWriter(new FileWriter(Constants.TAG_INDUSTRY_FILE));
@@ -161,9 +162,9 @@ public class DataModelJobRunner {
 					});
 
 			if (topTags.size() >= 5) {
-				writeTofile(entry.getKey(), tagSectorWriter, 5, topTags);
+				writeTopTagsPerSectorToFile(entry.getKey(), tagSectorWriter, 5, topTags);
 			} else {
-				writeTofile(entry.getKey(), tagSectorWriter, topTags.size(), topTags);
+				writeTopTagsPerSectorToFile(entry.getKey(), tagSectorWriter, topTags.size(), topTags);
 			}
 
 			topTags.clear();
@@ -171,8 +172,9 @@ public class DataModelJobRunner {
 
 		tagSectorWriter.close();
 	}
-
-	private static void writeTofile(String sector, BufferedWriter tagSectorWriter, int numberOfSkills, List<Entry<String, Integer>> topTags) throws IOException {
+	
+	private static void writeTopTagsPerSectorToFile(String sector, final BufferedWriter tagSectorWriter, int numberOfSkills, 
+			List<Entry<String, Integer>> topTags)	throws IOException {
 		
 		StringBuffer buffer = new StringBuffer();
 		buffer.append(sector).append(Constants.COMMA);
@@ -184,44 +186,4 @@ public class DataModelJobRunner {
 		tagSectorWriter.write(buffer.toString().substring(0, buffer.length() - 1));
 		tagSectorWriter.write("\n");
 	}
-
-	/**
-	 * Reads the industry to sector mapping file from distributed cache and
-	 * populates a {@link Map}
-	 * 
-	 * @param configuration
-	 * @throws IOException
-	 */
-	private static Map<String, String> populateIndustryToSector(Configuration configuration) throws IOException {
-
-		Map<String, String> industryToSector = new HashMap<String, String>();
-
-		Path[] localFiles = DistributedCache.getLocalCacheFiles(configuration);
-
-		String industrySectorFile = configuration.get(Constants.INDUSTRY_SECTOR_FILE);
-		industrySectorFile = industrySectorFile.substring(industrySectorFile.lastIndexOf("/") + 1);
-
-		if (localFiles == null) {
-
-			throw new RuntimeException("DistributedCache not present in HDFS");
-		}
-
-		for (Path path : localFiles) {
-
-			if (industrySectorFile.equals(path.getName())) {
-
-				BufferedReader bufferedReader = new BufferedReader(new FileReader(path.toString()));
-
-				String line = null;
-				String words[] = null;
-				while ((line = bufferedReader.readLine()) != null) {
-					words = line.split(Constants.COMMA);
-					industryToSector.put(words[0], words[1]);
-				}
-				bufferedReader.close();				
-			}
-		}
-		return industryToSector;
-	}
-
 }

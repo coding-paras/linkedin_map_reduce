@@ -13,9 +13,10 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 
 import edu.neu.ccs.constants.Constants;
+import edu.neu.ccs.objects.UserProfile;
 import edu.neu.ccs.util.UtilHelper;
 
-public class DataModelReducer extends Reducer<Text, Text, NullWritable, Text> {
+public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, Text> {
 
 	private MultipleOutputs<NullWritable, Text> multipleOutputs;
 	private Map<String, List<String>> topTagsPerSector;
@@ -34,12 +35,22 @@ public class DataModelReducer extends Reducer<Text, Text, NullWritable, Text> {
 	}
 
 	@Override
-	protected void reduce(Text key, Iterable<Text> values, Context context)
+	protected void reduce(Text key, Iterable<UserProfile> values, Context context)
 			throws IOException, InterruptedException {
 		
-		for (Text value : values) {
-			context.write(NullWritable.get(), value);
+		for (UserProfile userprofile : values) {
+			
+			createAndOutputDataModel();
+			
+			//outputs pruned data
+			multipleOutputs.write(Constants.PRUNED_DATA_TAG, NullWritable.get(), userprofile);
 		}
+	}
+
+	private void createAndOutputDataModel() {
+		
+		
+		
 	}
 
 	@Override

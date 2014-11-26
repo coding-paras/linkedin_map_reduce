@@ -1,8 +1,6 @@
 package edu.neu.ccs.datamodelbuilder;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -10,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
@@ -26,7 +23,7 @@ import edu.neu.ccs.objects.Position;
 import edu.neu.ccs.objects.UserProfile;
 import edu.neu.ccs.util.UtilHelper;
 
-public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
+public class DataModelMapper extends Mapper<Object, Text, Text, UserProfile> {
 
 	private static Logger logger = Logger.getLogger(DataModelMapper.class);
 	
@@ -46,48 +43,10 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 
 		UtilHelper.populateKeyValues(tagToIndustries, tagIndustriesFile);
 		
-		populateIndustryToSector(context);
+		industryToSector = UtilHelper.populateIndustryToSector(context.getConfiguration());
 		
 		gson = new Gson();
 		userProfileListType = new TypeToken<List<UserProfile>>() {}.getType();
-	}
-	
-	/**
-	 * Reads the industry to sector mapping file from distributed cache and
-	 * populates a {@link Map}
-	 * 
-	 * @param context
-	 * @throws IOException
-	 */
-	private void populateIndustryToSector(Context context) throws IOException {
-
-		industryToSector = new HashMap<String, String>();
-
-		Path[] localFiles = DistributedCache.getLocalCacheFiles(context.getConfiguration());
-
-		String industrySectorFile = context.getConfiguration().get(Constants.INDUSTRY_SECTOR_FILE);
-		industrySectorFile = industrySectorFile.substring(industrySectorFile.lastIndexOf("/") + 1);
-
-		if (localFiles == null) {
-
-			throw new RuntimeException("DistributedCache not present in HDFS");
-		}
-
-		for (Path path : localFiles) {
-
-			if (industrySectorFile.equals(path.getName())) {
-
-				BufferedReader bufferedReader = new BufferedReader(new FileReader(path.toString()));
-
-				String line = null;
-				String words[] = null;
-				while ((line = bufferedReader.readLine()) != null) {
-					words = line.split(Constants.COMMA);
-					industryToSector.put(words[0], words[1]);
-				}
-				bufferedReader.close();				
-			}
-		}
 	}
 	
 	@Override
@@ -153,11 +112,12 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 			position.setSummary(null);
 		}
 		
-		String userProfileInJson = gson.toJson(userProfile);
+		//String userProfileInJson = gson.toJson(userProfile);
 		
 		for (int i = finalStartYear; i <= finalEndYear; i++) {		
 			// Emitting user profile for each year
-			context.write(new Text(i+Constants.COMMA+sector), new Text(userProfileInJson));
+			//context.write(new Text(i+Constants.COMMA+sector), new Text(userProfileInJson));
+			context.write(new Text(i+Constants.COMMA+sector), userProfile);
 		}
 	}
 	
