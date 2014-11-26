@@ -2,7 +2,6 @@ package edu.neu.ccs.datamodelbuilder;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -179,18 +178,20 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 	
 	private String getMaxSector(UserProfile userProfile) {
 		
+		List<String> tags = populateTags(userProfile);
+		
 		Map<String, Integer> sectorCount = new HashMap<String, Integer>();
 		String maxSector = null, sector = null;
 		int maxCount = -1;
 		
-		for(String skill : userProfile.getSkillSet()) {
-			
-			if (tagToIndustries.get(skill) == null) {
-				
+		for (String tag : tags) {
+
+			if (tagToIndustries.get(tag) == null) {
+
 				continue;
 			}
 
-			for (String industry : tagToIndustries.get(skill)) {
+			for (String industry : tagToIndustries.get(tag)) {
 
 				int count = 1;
 				sector = industryToSector.get(industry);
@@ -209,39 +210,23 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 				}
 				sectorCount.put(sector, count);
 			}
-		}
-		
-		for (Position position : userProfile.getPositions()) {
-			
-			if (tagToIndustries.get(position.getTitle()) == null) {
-
-				continue;
-			}
-			
-			for (String industry : tagToIndustries.get(position.getTitle())) {
-
-				int count = 1;
-				sector = industryToSector.get(industry);
-				if (sector == null) {
-
-					continue;
-				}
-				if (sectorCount.get(sector) != null) {
-
-					count = sectorCount.get(sector) + 1;
-				}
-				if (count > maxCount) {
-
-					maxCount = count;
-					maxSector = sector;
-				}
-				sectorCount.put(sector, count);
-			}
-		}
-		
+		}		
 		return maxSector;
 	}
 
+
+	private List<String> populateTags(UserProfile userProfile) {
+		List<String> tags = new ArrayList<String>();
+		
+		tags.addAll(tags);
+		
+		for(Position position: userProfile.getPositions())
+		{
+			tags.add(position.getTitle());
+		}
+		
+		return tags;
+	}
 
 	@Override
 	protected void cleanup(Context context) throws IOException, InterruptedException {
