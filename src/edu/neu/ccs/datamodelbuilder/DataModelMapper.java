@@ -133,15 +133,14 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 				return;
 			}
 
-			List<UserProfile> userProfileList = gson.fromJson(value.toString(),
-					userProfileListType);
+			List<UserProfile> userProfileList = gson.fromJson(value.toString(),	userProfileListType);
 
 			if (userProfileList == null) {
 				return;
 			}
 
 			for (UserProfile userProfile : userProfileList) {
-				
+
 				assignSector(userProfile);
 				
 				// Pruning
