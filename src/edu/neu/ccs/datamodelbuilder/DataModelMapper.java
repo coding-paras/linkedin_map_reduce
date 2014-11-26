@@ -136,20 +136,21 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 			List<UserProfile> userProfileList = gson.fromJson(value.toString(),
 					userProfileListType);
 
-			String industry = null;
 			if (userProfileList == null) {
 				return;
 			}
 
 			for (UserProfile userProfile : userProfileList) {
-
-				/*industry = userProfile.getIndustry();
-				if (industry == null || industry.trim().isEmpty()) {
-
-					assignIndustry(userProfile);
-				}*/
 				
 				assignSector(userProfile);
+				
+				// Pruning
+				userProfile.setFirstName(null);
+				userProfile.setLastName(null);
+				userProfile.setIndustry(null);
+				
+				// Emitting pruned data
+				context.write(new Text(Constants.PRUNED_DATA), new Text(gson.toJson(userProfile)));
 			}
 		} catch(JsonSyntaxException jse)	{
 			
@@ -173,6 +174,9 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 		for (Position position : userProfile.getPositions()) {
 			
 			position.setSector(sector);
+			
+			// Pruning
+			position.setSummary(null);
 		}
 	}
 	
