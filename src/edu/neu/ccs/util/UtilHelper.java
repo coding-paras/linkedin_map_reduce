@@ -1,24 +1,25 @@
 package edu.neu.ccs.util;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.mapreduce.Mapper.Context;
 
 import edu.neu.ccs.constants.Constants;
 
 public class UtilHelper {
-	
+
 	/**
 	 * 
 	 * @param map
@@ -26,30 +27,30 @@ public class UtilHelper {
 	 * @throws IOException
 	 */
 	public static void populateKeyValues(Map<String, List<String>> map, String fileName) throws IOException {
-		
+
 		map = new HashMap<String, List<String>>();
-		
+
 		BufferedReader bufferedReader = new BufferedReader(new FileReader(fileName));
-		
+
 		String line;
 		String[] attributes = null;
 		List<String> values = null;
 		while((line = bufferedReader.readLine()) != null) {
-			
+
 			attributes = line.split(Constants.COMMA);
-			
+
 			values = new ArrayList<String>();
 			for (int i = 1; i < attributes.length; i++) {
-				
+
 				values.add(attributes[i]);
 			}
-			
+
 			map.put(attributes[0], values);
 		}
-		
+
 		bufferedReader.close();
 	}
-	
+
 	/**
 	 * Reads the industry to sector mapping file from distributed cache and
 	 * populates a {@link Map}
@@ -87,5 +88,38 @@ public class UtilHelper {
 			}
 		}
 		return industryToSector;
+	}
+
+	public static String serialize(Object obj) throws IOException {
+		
+		ByteArrayOutputStream b = null;
+		try {
+			
+			b = new ByteArrayOutputStream();
+			ObjectOutputStream o = new ObjectOutputStream(b);
+			o.writeObject(obj);
+			
+			return new String(b.toByteArray());
+		} finally {
+			if (b != null) {
+				b.close();
+			}
+		}
+	}
+
+	public static Object deserialize(String obj) throws IOException, ClassNotFoundException {
+		
+		ByteArrayInputStream b = null;
+		try {
+			
+			b = new ByteArrayInputStream(obj.getBytes());
+			ObjectInputStream o = new ObjectInputStream(b);
+			
+			return o.readObject();
+		} finally {
+			if (b != null) {
+				b.close();
+			}
+		}
 	}
 }
