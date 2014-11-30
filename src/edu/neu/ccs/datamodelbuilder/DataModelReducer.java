@@ -1,9 +1,7 @@
 package edu.neu.ccs.datamodelbuilder;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -137,10 +135,7 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		ByteArrayOutputStream b = new ByteArrayOutputStream();
-		ObjectOutputStream o = new ObjectOutputStream(b);
-		o.writeObject(cModel);
-		return new String(b.toByteArray());
+		return UtilHelper.serialize(cModel);
 	}
 
 	private Set<String> populateTags(UserProfile userProfile, String year) {
