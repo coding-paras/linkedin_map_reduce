@@ -111,12 +111,13 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 					}
 
 					data.setValue((Attribute) wekaAttributes.elementAt(currentIndex), sector);
+
 					currentIndex++;
 
 					data.setValue((Attribute) wekaAttributes.elementAt(currentIndex), userProfile.getRelevantExperience());
 					currentIndex++;
 
-					data.setValue((Attribute) wekaAttributes.elementAt(currentIndex),classLabel.name());
+					data.setValue((Attribute) wekaAttributes.elementAt(currentIndex),classLabel.toString());
 					currentIndex++;
 
 					trainingSet.add(data);

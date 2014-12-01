@@ -15,6 +15,7 @@ public class DataModelPartitioner extends Partitioner<Text, UserProfile> {
 		
 		this.random = new Random();
 	}
+
 	
 	@Override
     public int getPartition(Text key, UserProfile value, int numReduceTasks) {
