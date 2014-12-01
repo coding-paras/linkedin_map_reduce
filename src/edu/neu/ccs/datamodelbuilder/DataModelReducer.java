@@ -69,7 +69,18 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 	@Override
 	protected void reduce(Text key, Iterable<UserProfile> values, Context context)
 			throws IOException, InterruptedException {
+		
+		// outputs pruned data
+		if (key.toString().contains(Constants.PRUNED_DATA)) {
 
+			for (UserProfile userProfile : values) {
+				
+				multipleOutputs.write(Constants.PRUNED_DATA_TAG, NullWritable.get(), new Text(gson.toJson(userProfile)));
+			}
+			
+			return;
+		}
+		
 		String keyValues[] = key.toString().split(Constants.COMMA);
 		String year = keyValues[0];
 		String sector = keyValues[1];
@@ -128,8 +139,6 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 
 					logger.error(e);
 				}
-				//outputs the pruned data
-				multipleOutputs.write(Constants.PRUNED_DATA_TAG, NullWritable.get(), new Text(gson.toJson(userProfile)));
 			}
 		}
 		else {
@@ -138,8 +147,6 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 
 				//outputs the test data
 				multipleOutputs.write(Constants.TEST_DATA_TAG, NullWritable.get(), new Text(gson.toJson(userprofile)));
-				//outputs the pruned data
-				multipleOutputs.write(Constants.PRUNED_DATA_TAG, NullWritable.get(), new Text(gson.toJson(userprofile)));
 			}
 		}
 
