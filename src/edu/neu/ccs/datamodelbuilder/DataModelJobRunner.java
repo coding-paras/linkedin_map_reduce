@@ -40,8 +40,8 @@ public class DataModelJobRunner {
 		Configuration conf = new Configuration();
 		String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
 
-		if (otherArgs.length != 4) {
-			System.err.println("Usage: datamodelbuilder <in> <out> <cache> <output_job1_folder>");
+		if (otherArgs.length != 5) {
+			System.err.println("Usage: datamodelbuilder <in> <out> <cache> <output_job1_folder> <top_tag_sector_folder>");
 			System.exit(4);
 		}
 
@@ -136,7 +136,7 @@ public class DataModelJobRunner {
 		
 		createTopIndustriesFile(topTagsSector);
 		
-		fs.copyFromLocalFile(new Path(Constants.TOP_TAGS_SECTOR), new Path(otherArgs[1] + File.separator + Constants.TOP_TAGS_FILE_TAG));
+		fs.copyFromLocalFile(new Path(Constants.TOP_TAGS_SECTOR), new Path(otherArgs[4] + File.separator + Constants.TOP_TAGS_FILE_TAG));
 		
 		fs.close();
 		

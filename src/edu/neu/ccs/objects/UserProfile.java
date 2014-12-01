@@ -62,8 +62,8 @@ public class UserProfile implements WritableComparable<UserProfile> {
 		this.numOfConnections = numOfConnections;
 		this.industry = industry;
 		this.location = location;
-		this.skillSet = skillSet;
-		this.positions = positions;
+		this.skillSet = (skillSet != null ? skillSet : this.skillSet);
+		this.positions = (positions != null ? positions : this.positions);
 	}
 
 	public String getFirstName() {
