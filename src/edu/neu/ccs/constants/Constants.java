@@ -19,11 +19,25 @@ public class Constants {
 	
 	public enum ClassLabel {
 		
-		YES, NO;
+		YES("1"), NO("0");
+		
+		private String value;
+		
+		private ClassLabel(String value) {
+			
+			this.value = value;
+		}
+		
+		@Override
+		public String toString() {
+			
+			return this.value;
+		}
 	}
 	public static final String TEST_YEAR = "testyear";
 	// JOB 2 output names
 	public static final String DATA_MODEL_TAG = "datamodel";
 	public static final String PRUNED_DATA_TAG = "pruneddata";
 	public static final String TEST_DATA_TAG = "testdata";
+	public static final String TOP_TAGS_FILE_TAG = "toptagsfile";
 }

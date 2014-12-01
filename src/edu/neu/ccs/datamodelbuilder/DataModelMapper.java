@@ -119,6 +119,7 @@ public class DataModelMapper extends Mapper<Object, Text, Text, UserProfile> {
 				positions = new ArrayList<Position>();
 				if (positionsPerYearSector.containsKey(key)) {
 					
+					positions = positionsPerYearSector.get(key);
 					positions.add(position);
 				}
 				

@@ -2,6 +2,7 @@ package edu.neu.ccs.datamodelbuilder;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -56,6 +57,7 @@ public class DataModelJobRunner {
 
 		MultipleOutputs.addNamedOutput(job, Constants.PRUNED_DATA_TAG, TextOutputFormat.class, NullWritable.class, Text.class);
 		MultipleOutputs.addNamedOutput(job, Constants.DATA_MODEL_TAG, TextOutputFormat.class, NullWritable.class, Text.class);
+		MultipleOutputs.addNamedOutput(job, Constants.TEST_DATA_TAG, TextOutputFormat.class, NullWritable.class, Text.class);
 		
 		FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
 		FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
@@ -133,6 +135,10 @@ public class DataModelJobRunner {
 		tagIndustryWriter.close();
 		
 		createTopIndustriesFile(topTagsSector);
+		
+		fs.copyFromLocalFile(new Path(Constants.TOP_TAGS_SECTOR), new Path(otherArgs[1] + File.separator + Constants.TOP_TAGS_FILE_TAG));
+		
+		fs.close();
 		
 		//Displaying the counters and their values
 		System.exit(job.waitForCompletion(true) ? 0 : 1);

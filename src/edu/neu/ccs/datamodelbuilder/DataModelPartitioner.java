@@ -10,7 +10,12 @@ import edu.neu.ccs.objects.UserProfile;
 
 public class DataModelPartitioner extends Partitioner<Text, UserProfile> {
 
-	Random random = new Random();
+	private Random random;
+	public DataModelPartitioner() {
+		
+		this.random = new Random();
+	}
+	
 	@Override
     public int getPartition(Text key, UserProfile value, int numReduceTasks) {
 		

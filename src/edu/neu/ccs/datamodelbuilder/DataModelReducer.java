@@ -49,11 +49,7 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 	private int index;
 	
 	//data model attributes
-	//private String fromSector;
-	//private String toSector;
-	//private String sector;
 	private ClassLabel classLabel;
-	//private int experience;
 	
 	@Override
 	protected void setup(Context context) throws IOException, InterruptedException {
@@ -76,8 +72,7 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 			for (UserProfile userProfile : values) {
 				
 				multipleOutputs.write(Constants.PRUNED_DATA_TAG, NullWritable.get(), new Text(gson.toJson(userProfile)));
-			}
-			
+			}	
 			return;
 		}
 		
@@ -93,9 +88,9 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 			trainingSet.setClassIndex(index - 1);
 
 			Instance data = new Instance(index);
-			int currentIndex = 0;
 			for (UserProfile userProfile : values) {
 
+				int currentIndex = 0;
 				Set<String> tags = populateTagsAndSetClassifier(userProfile, year);
 
 				if (tags.size() > 0) {
@@ -107,20 +102,16 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 					for (Entry<String, Integer> entry : tagAttributeMap.entrySet()) {
 						if (tags.contains(entry.getKey())) {
 							data.setValue((Attribute) wekaAttributes.elementAt(tagAttributeMap.get(entry.getKey())),
-									ClassLabel.YES.name());
+									ClassLabel.YES.toString());
 						} else {
 							data.setValue((Attribute) wekaAttributes.elementAt(tagAttributeMap.get(entry.getKey())),
-									ClassLabel.NO.name());
+									ClassLabel.NO.toString());
 						}
 						currentIndex++;
 					}
 
 					data.setValue((Attribute) wekaAttributes.elementAt(currentIndex), sector);
-					//data.setValue((Attribute) wekaAttributes.elementAt(currentIndex),fromSector);
 					currentIndex++;
-
-					//data.setValue((Attribute) wekaAttributes.elementAt(currentIndex),toSector);
-					//currentIndex++;
 
 					data.setValue((Attribute) wekaAttributes.elementAt(currentIndex), userProfile.getRelevantExperience());
 					currentIndex++;
@@ -130,15 +121,15 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 
 					trainingSet.add(data);
 				}
+			}
+			
+			try {
+				//outputs the DataModel
+				multipleOutputs.write(Constants.DATA_MODEL_TAG, NullWritable.get(), new Text(year + Constants.COMMA + sector + 
+						Constants.COMMA + new String(getClassifier())));
+			} catch (Exception e) {
 
-				try {
-					//outputs the DataModel
-					multipleOutputs.write(Constants.DATA_MODEL_TAG, NullWritable.get(), new Text(year + Constants.COMMA + sector + 
-							Constants.COMMA + new String(getClassifier())));
-				} catch (Exception e) {
-
-					logger.error(e);
-				}
+				logger.error(e);
 			}
 		}
 		else {
@@ -198,8 +189,8 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 		for (String tag : tags) {
 			
 			skillVector = new FastVector(2);
-			skillVector.addElement("Yes");
-			skillVector.addElement("No");
+			skillVector.addElement(ClassLabel.YES);
+			skillVector.addElement(ClassLabel.NO);
 			skill = new Attribute(tag, skillVector);
 			skills.add(skill);
 			tagAttributeMap.put(tag, index);
@@ -208,21 +199,14 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 
 		Sector[] sectors = Sector.values();
 
-		FastVector fromSector = new FastVector(sectors.length);
+		FastVector sectorVector = new FastVector(sectors.length);
 		for (int i = 0; i < sectors.length; i++) {
 			
-			fromSector.addElement(sectors[i].name());
+			sectorVector.addElement(sectors[i].name());
 		}
-		Attribute fromSectorAttribute = new Attribute("fromSector", fromSector);
+		Attribute sectorAttribute = new Attribute("sector", sectorVector);
 		index++;
-
-		FastVector toSector = new FastVector(sectors.length);
-		for (int i = 0; i < sectors.length; i++) {
-			
-			toSector.addElement(sectors[i].name());
-		}
-		Attribute toSectorAttribute = new Attribute("toSector", toSector);
-		index++;
+		
 		Attribute experience = new Attribute("experience");
 		index++;
 		
@@ -238,8 +222,7 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 			
 			wekaAttributes.addElement(skillAttr);
 		}
-		wekaAttributes.addElement(fromSectorAttribute);
-		wekaAttributes.addElement(toSectorAttribute);
+		wekaAttributes.addElement(sectorAttribute);
 		wekaAttributes.addElement(experience);
 		wekaAttributes.addElement(classAttribute);
 	}
