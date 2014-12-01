@@ -47,6 +47,7 @@ public class UserProfile implements WritableComparable<UserProfile> {
 	@SerializedName(value="last-name")
 	private String lastName;
 	private String industry;
+	private Integer relevantExperience;
 	
 	public UserProfile() {
 		
@@ -121,6 +122,14 @@ public class UserProfile implements WritableComparable<UserProfile> {
 		this.positions = positions;
 	}
 
+	public Integer getRelevantExperience() {
+		return relevantExperience;
+	}
+
+	public void setRelevantExperience(Integer relevantExperience) {
+		this.relevantExperience = relevantExperience;
+	}
+
 	@Override
 	public void readFields(DataInput in) throws IOException {
 		
@@ -144,6 +153,7 @@ public class UserProfile implements WritableComparable<UserProfile> {
 			position.readFields(in);
 			positions.add(position);
 		}
+		this.relevantExperience = in.readInt();
 	}
 
 	@Override
@@ -164,6 +174,7 @@ public class UserProfile implements WritableComparable<UserProfile> {
 
 			position.write(out);
 		}
+		out.writeInt(this.relevantExperience);
 	}
 
 	@Override
@@ -178,6 +189,7 @@ public class UserProfile implements WritableComparable<UserProfile> {
 		.append(this.location, that.location)
 		.append(this.skillSet, that.skillSet)
 		.append(this.positions, that.positions)
+		.append(this.relevantExperience, that.relevantExperience)
 		.toComparison();
 	}
 
@@ -199,6 +211,7 @@ public class UserProfile implements WritableComparable<UserProfile> {
 		.append(this.location, that.location)
 		.append(this.skillSet, that.skillSet)
 		.append(this.positions, that.positions)
+		.append(this.relevantExperience, that.relevantExperience)
 		.isEquals();
 	}
 	
@@ -213,6 +226,7 @@ public class UserProfile implements WritableComparable<UserProfile> {
 		.append(this.location)
 		.append(this.skillSet)
 		.append(this.positions)
+		.append(this.relevantExperience)
 		.toHashCode();
 	}
 	
@@ -229,6 +243,7 @@ public class UserProfile implements WritableComparable<UserProfile> {
 		stringBuilder.append("Location: ").append(this.location).append(", ");
 		stringBuilder.append("Skills Set: ").append("[").append(this.skillSet).append("]").append(", ");
 		stringBuilder.append("Positions: ").append("[").append(this.positions).append("]").append("}");
+		stringBuilder.append("Relevant Experience: ").append("[").append(this.relevantExperience).append("]").append("}");
 		
 		return stringBuilder.toString();
 	}

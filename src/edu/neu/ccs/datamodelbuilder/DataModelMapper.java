@@ -69,8 +69,7 @@ public class DataModelMapper extends Mapper<Object, Text, Text, UserProfile> {
 				// Pruning
 				userProfile.setFirstName(null);
 				userProfile.setLastName(null);
-				userProfile.setIndustry(null);
-				assignSector(userProfile, context);
+				assignSectorAndEmitData(userProfile, context);
 			}
 		} catch(JsonSyntaxException jse)	{
 			
@@ -80,11 +79,12 @@ public class DataModelMapper extends Mapper<Object, Text, Text, UserProfile> {
 
 	}
 	
-	private void assignSector(UserProfile userProfile, Context context) throws IOException, InterruptedException {
+	private void assignSectorAndEmitData(UserProfile userProfile, Context context) throws IOException, InterruptedException {
 		
 		String sector = null;
 		int finalStartYear = Integer.MAX_VALUE, finalEndYear = Integer.MIN_VALUE;
 		int startYear, endYear;
+		Map<String, List<Position>> positionsPerYearSector = new HashMap<String, List<Position>>();
 		if (userProfile.getIndustry() == null || industryToSector.get(userProfile.getIndustry()) == null) {
 			
 			sector = getMaxSector(userProfile);
@@ -93,9 +93,9 @@ public class DataModelMapper extends Mapper<Object, Text, Text, UserProfile> {
 			sector = industryToSector.get(userProfile.getIndustry());
 		}		
 		
+		//setting the sector/industry
+		userProfile.setIndustry(sector);
 		for (Position position : userProfile.getPositions()) {
-			
-			position.setSector(sector);
 			
 			startYear = Integer.parseInt(position.getStartDate().split(Constants.DATE_SPLITTER)[0]);
 			endYear = Integer.parseInt(position.getEndDate().split(Constants.DATE_SPLITTER)[0]);
@@ -110,15 +110,37 @@ public class DataModelMapper extends Mapper<Object, Text, Text, UserProfile> {
 			
 			// Pruning
 			position.setSummary(null);
+			
+			List<Position> positions = null;
+			String key = null;
+			for (int i = startYear; i <= endYear; i++) {
+				
+				key = i + Constants.COMMA + sector;
+				positions = new ArrayList<Position>();
+				if (positionsPerYearSector.containsKey(key)) {
+					
+					positions.add(position);
+				}
+				
+				positionsPerYearSector.put(key, positions);
+			}
 		}
 		
-		//String userProfileInJson = gson.toJson(userProfile);
-		
-		for (int i = finalStartYear; i <= finalEndYear; i++) {		
+		//TODO - modify calculating experience to add the stints at each of the positions
+		UserProfile newUserProfile = null;
+		String key = null;
+		for (int i = finalStartYear; i <= finalEndYear; i++) {
+			
 			// Emitting user profile for each year
-			//context.write(new Text(i+Constants.COMMA+sector), new Text(userProfileInJson));
-			context.write(new Text(i+Constants.COMMA+sector), userProfile);
+			key = i + Constants.COMMA + sector;
+			newUserProfile = new UserProfile(userProfile.getFirstName(), userProfile.getLastName(), userProfile.getNumOfConnections(),
+					userProfile.getIndustry(), userProfile.getLocation(), userProfile.getSkillSet(), positionsPerYearSector.get(key));
+			newUserProfile.setRelevantExperience(i - finalStartYear);
+			context.write(new Text(key), newUserProfile);
 		}
+		
+		//Pruned data
+		context.write(new Text(Constants.PRUNED_DATA), userProfile);
 	}
 	
 	private String getMaxSector(UserProfile userProfile) {

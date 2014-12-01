@@ -33,7 +33,6 @@ public class Position implements WritableComparable<Position> {
 	private boolean isCurrent;
 	@SerializedName(value="company-name")
 	private String companyName;
-	private String sector;
 
 	public Position() {
 
@@ -49,7 +48,6 @@ public class Position implements WritableComparable<Position> {
 		this.isCurrent = isCurrent;
 		this.startDate = startDate;
 		this.endDate = endDate;
-		this.sector = sector;
 	}
 
 	public String getSummary() {
@@ -100,14 +98,6 @@ public class Position implements WritableComparable<Position> {
 		this.endDate = endDate;
 	}
 
-	public String getSector() {
-		return sector;
-	}
-
-	public void setSector(String sector) {
-		this.sector = sector;
-	}
-
 	@Override
 	public void readFields(DataInput dataInput) throws IOException {
 		this.summary = dataInput.readUTF();
@@ -116,7 +106,6 @@ public class Position implements WritableComparable<Position> {
 		this.isCurrent = dataInput.readBoolean();
 		this.startDate = dataInput.readUTF();
 		this.endDate = dataInput.readUTF();
-		this.sector = dataInput.readUTF();
 	}
 
 	@Override
@@ -127,7 +116,6 @@ public class Position implements WritableComparable<Position> {
 		dataOutput.writeBoolean(isCurrent);
 		dataOutput.writeUTF(startDate);
 		dataOutput.writeUTF(endDate);
-		dataOutput.writeUTF(sector);
 
 	}
 
@@ -139,8 +127,7 @@ public class Position implements WritableComparable<Position> {
 				.append(this.companyName, otherPosition.companyName)
 				.append(this.isCurrent, otherPosition.isCurrent)
 				.append(this.startDate, otherPosition.startDate)
-				.append(this.endDate, otherPosition.endDate)
-				.append(this.sector, otherPosition.sector).toComparison();
+				.append(this.endDate, otherPosition.endDate).toComparison();
 	}
 
 	@Override
@@ -161,15 +148,13 @@ public class Position implements WritableComparable<Position> {
 				.append(companyName, otherPosition.companyName)
 				.append(isCurrent, otherPosition.isCurrent)
 				.append(startDate, otherPosition.startDate)
-				.append(endDate, otherPosition.endDate)
-				.append(sector, otherPosition.sector).isEquals();
+				.append(endDate, otherPosition.endDate).isEquals();
 	}
 
 	@Override
 	public int hashCode() {
 		return new HashCodeBuilder(17, 37).append(summary).append(title)
-				.append(companyName).append(isCurrent).append(startDate)
-				.append(endDate).append(sector).toHashCode();
+				.append(companyName).append(isCurrent).append(startDate).toHashCode();
 	}
 
 	@Override
@@ -180,8 +165,7 @@ public class Position implements WritableComparable<Position> {
 				.append("CompanyName: ").append(companyName).append(",")
 				.append("IsCurrent: ").append(isCurrent).append(",")
 				.append("StartDate: ").append(startDate).append(",")
-				.append("EndDate: ").append(endDate).append(",")
-				.append("Sector: ").append(sector);
+				.append("EndDate: ").append(endDate);
 		return stringBuilder.toString();
 	}
 

@@ -37,8 +37,7 @@ public class DataModelJobRunner {
 	public static void main(String[] args) throws Exception {
 
 		Configuration conf = new Configuration();
-		String[] otherArgs = new GenericOptionsParser(conf, args)
-		.getRemainingArgs();
+		String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
 
 		if (otherArgs.length != 4) {
 			System.err.println("Usage: datamodelbuilder <in> <out> <cache> <output_job1_folder>");
@@ -50,6 +49,7 @@ public class DataModelJobRunner {
 		job.setJarByClass(DataModelJobRunner.class);
 		job.setMapperClass(DataModelMapper.class);
 		job.setReducerClass(DataModelReducer.class);
+		job.setPartitionerClass(DataModelPartitioner.class);
 
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(UserProfile.class);
@@ -64,6 +64,9 @@ public class DataModelJobRunner {
 		DistributedCache.addCacheFile(new URI(otherArgs[2]), job.getConfiguration());
 		
 		job.getConfiguration().set(Constants.INDUSTRY_SECTOR_FILE, otherArgs[2]); //DistributedCache filename
+		
+		//Setting the test_year for the data set
+		job.getConfiguration().set(Constants.TEST_YEAR, "2012");
 		
 		//Distributed Cache - HDFS Output from Job1
 		FileSystem fs = FileSystem.get(job.getConfiguration());
@@ -136,14 +139,13 @@ public class DataModelJobRunner {
 	}
 	
 	private static void createTopIndustriesFile(Map<String, Map<String, Integer>> topTagsSector) throws IOException {
-		BufferedWriter tagSectorWriter = new BufferedWriter(new FileWriter(
-				Constants.TOP_TAGS_SECTOR));
+		
+		BufferedWriter tagSectorWriter = new BufferedWriter(new FileWriter(Constants.TOP_TAGS_SECTOR));
 
 		Map<String, Integer> tags = null;
 		List<Map.Entry<String, Integer>> topTags = new ArrayList<Map.Entry<String, Integer>>();
 		
-		for (Map.Entry<String, Map<String, Integer>> entry : topTagsSector
-				.entrySet()) {
+		for (Map.Entry<String, Map<String, Integer>> entry : topTagsSector.entrySet()) {
 
 			tags = entry.getValue();
 
@@ -153,11 +155,9 @@ public class DataModelJobRunner {
 					new Comparator<Map.Entry<String, Integer>>() {
 
 						@Override
-						public int compare(Entry<String, Integer> entry1,
-								Entry<String, Integer> entry2) {
+						public int compare(Entry<String, Integer> entry1, Entry<String, Integer> entry2) {
 
-							return -entry1.getValue().compareTo(
-									entry2.getValue());
+							return -entry1.getValue().compareTo(entry2.getValue());
 						}
 					});
 

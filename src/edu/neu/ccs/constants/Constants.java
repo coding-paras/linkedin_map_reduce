@@ -17,7 +17,13 @@ public class Constants {
 	public static final String TAG_INDUSTRY = "tagindustry";
 	public static final String TOP_TAGS = "toptags";
 	
+	public enum ClassLabel {
+		
+		YES, NO;
+	}
+	public static final String TEST_YEAR = "testyear";
 	// JOB 2 output names
 	public static final String DATA_MODEL_TAG = "datamodel";
 	public static final String PRUNED_DATA_TAG = "pruneddata";
+	public static final String TEST_DATA_TAG = "testdata";
 }
