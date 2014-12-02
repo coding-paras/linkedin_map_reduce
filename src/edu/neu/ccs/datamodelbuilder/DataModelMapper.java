@@ -91,6 +91,10 @@ public class DataModelMapper extends Mapper<Object, Text, Text, UserProfile> {
 			sector = industryToSector.get(userProfile.getIndustry());
 		}		
 		
+		//removing + from the number of connections //TODO - move to job 1
+		if (userProfile.getNumOfConnections() != null) {
+			userProfile.setNumOfConnections(userProfile.getNumOfConnections().replaceAll(Constants.PLUS, Constants.EMPTY_STRING));
+		}
 		//setting the sector/industry
 		userProfile.setIndustry(sector);
 		for (Position position : userProfile.getPositions()) {

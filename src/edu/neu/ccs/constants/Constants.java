@@ -5,6 +5,8 @@ public class Constants {
 	public static final String COMMA = ",";
 	public static final String DATE_DELIMITER_1 = "-";
 	public static final String DATE_DELIMITER_2 = "/";
+	public static final String EMPTY_STRING = "";
+	public static final String PLUS = "\\+";
 	
 	public static final int END_YEAR = 2012;
 	public static final String INDUSTRY_SECTOR_FILE = "industry_sector_file";

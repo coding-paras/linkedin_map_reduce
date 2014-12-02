@@ -98,7 +98,7 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 				int currentIndex = 0;
 				Set<String> tags = populateTagsAndSetClassifier(userProfile, year);
 
-				if (tags.size() > 0) {
+				if (userProfile.getPositions().size() > 0) {
 
 					data.setValue((Attribute) wekaAttributes.elementAt(currentIndex),
 							Integer.parseInt(userProfile.getNumOfConnections()));
@@ -159,10 +159,10 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 
 	private Set<String> populateTagsAndSetClassifier(UserProfile userProfile, String year) {
 		
-		List<Position> positions = new ArrayList<Position>();
+		List<Position> positions = userProfile.getPositions();
 		Set<String> tags = new HashSet<String>();
 		
-		for(Position position: userProfile.getPositions()) {
+		for(Position position: positions) {
 
 			tags.add(position.getTitle());
 		}
