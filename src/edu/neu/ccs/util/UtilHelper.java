@@ -24,11 +24,12 @@ public class UtilHelper {
 	 * 
 	 * @param map
 	 * @param fileName
+	 * @return 
 	 * @throws IOException
 	 */
-	public static void populateKeyValues(Map<String, List<String>> map, String fileName) throws IOException {
+	public static Map<String, List<String>> populateKeyValues(String fileName) throws IOException {
 
-		map = new HashMap<String, List<String>>();
+		Map<String, List<String>> map = new HashMap<String, List<String>>();
 
 		BufferedReader bufferedReader = new BufferedReader(new FileReader(fileName));
 
@@ -49,6 +50,7 @@ public class UtilHelper {
 		}
 
 		bufferedReader.close();
+		return map;
 	}
 
 	/**

@@ -59,7 +59,7 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 		
 		topTagsPerSectorFile = Constants.TOP_TAGS_SECTOR + System.currentTimeMillis();
 		FileSystem.get(context.getConfiguration()).copyToLocalFile(new Path(Constants.TOP_TAGS_SECTOR), new Path(topTagsPerSectorFile));
-		UtilHelper.populateKeyValues(topTagsPerSector, topTagsPerSectorFile);
+		topTagsPerSector = UtilHelper.populateKeyValues(topTagsPerSectorFile);
 	}
 
 	@Override
@@ -190,8 +190,8 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 		for (String tag : tags) {
 			
 			skillVector = new FastVector(2);
-			skillVector.addElement(ClassLabel.YES);
-			skillVector.addElement(ClassLabel.NO);
+			skillVector.addElement(ClassLabel.YES.toString());
+			skillVector.addElement(ClassLabel.NO.toString());
 			skill = new Attribute(tag, skillVector);
 			skills.add(skill);
 			tagAttributeMap.put(tag, index);
@@ -212,8 +212,8 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 		index++;
 		
 		FastVector classVariable = new FastVector(2);
-		classVariable.addElement(ClassLabel.YES);
-		classVariable.addElement(ClassLabel.NO);
+		classVariable.addElement(ClassLabel.YES.toString());
+		classVariable.addElement(ClassLabel.NO.toString());
 		Attribute classAttribute = new Attribute("label", classVariable);
 		index++;
 

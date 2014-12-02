@@ -92,7 +92,7 @@ public class PredcitorReducer extends
 		for (Path path : localFiles) {
 
 			if (topTagsFile.equals(path.getName())) {				
-				UtilHelper.populateKeyValues(topTagsPerSector, path.toString());
+				topTagsPerSector = UtilHelper.populateKeyValues(path.toString());
 			}
 		}
 

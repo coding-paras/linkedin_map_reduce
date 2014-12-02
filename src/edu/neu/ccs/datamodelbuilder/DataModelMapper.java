@@ -41,7 +41,7 @@ public class DataModelMapper extends Mapper<Object, Text, Text, UserProfile> {
 		tagIndustriesFile = Constants.TAG_INDUSTRY_FILE + System.currentTimeMillis();
 		FileSystem.get(context.getConfiguration()).copyToLocalFile(new Path(Constants.TAG_INDUSTRY_FILE), new Path(tagIndustriesFile));
 
-		UtilHelper.populateKeyValues(tagToIndustries, tagIndustriesFile);
+		tagToIndustries = UtilHelper.populateKeyValues(tagIndustriesFile);
 		
 		industryToSector = UtilHelper.populateIndustryToSector(context.getConfiguration());
 		
@@ -67,8 +67,6 @@ public class DataModelMapper extends Mapper<Object, Text, Text, UserProfile> {
 			for (UserProfile userProfile : userProfileList) {
 				
 				// Pruning
-				userProfile.setFirstName(null);
-				userProfile.setLastName(null);
 				assignSectorAndEmitData(userProfile, context);
 			}
 		} catch(JsonSyntaxException jse)	{
@@ -99,17 +97,25 @@ public class DataModelMapper extends Mapper<Object, Text, Text, UserProfile> {
 			
 			if (position.getStartDate() == null) {
 				
+				//context.getCounter(Constants.DATA_MODEL, Constants.START_YEAR_NULL);
 				continue;
 			}
-			startYear = Integer.parseInt(position.getStartDate().split(Constants.DATE_SPLITTER)[0]);
+			//Replacing "/" with "-" in the dates //TODO - move to job 1
+			position.setStartDate(position.getStartDate().replaceAll(Constants.DATE_DELIMITER_2, Constants.DATE_DELIMITER_1));
+			if (position.getEndDate() != null) {
+				
+				position.setEndDate(position.getEndDate().replaceAll(Constants.DATE_DELIMITER_2, Constants.DATE_DELIMITER_1));
+			}
+			
+			startYear = Integer.parseInt(position.getStartDate().split(Constants.DATE_DELIMITER_1)[0]);
 			endYear = (position.getEndDate() == null ? Constants.END_YEAR : 
-				Integer.parseInt(position.getEndDate().split(Constants.DATE_SPLITTER)[0]));
+				Integer.parseInt(position.getEndDate().split(Constants.DATE_DELIMITER_1)[0]));
 			
 			if (startYear < finalStartYear) {
 				finalStartYear = startYear;
 			}
 			
-			if (endYear < finalEndYear) {
+			if (endYear > finalEndYear) {
 				finalEndYear = endYear;
 			}
 			
@@ -125,9 +131,8 @@ public class DataModelMapper extends Mapper<Object, Text, Text, UserProfile> {
 				if (positionsPerYearSector.containsKey(key)) {
 					
 					positions = positionsPerYearSector.get(key);
-					positions.add(position);
 				}
-				
+				positions.add(position);
 				positionsPerYearSector.put(key, positions);
 			}
 		}

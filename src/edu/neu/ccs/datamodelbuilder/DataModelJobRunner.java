@@ -182,7 +182,7 @@ public class DataModelJobRunner {
 	}
 	
 	private static void writeTopTagsPerSectorToFile(String sector, final BufferedWriter tagSectorWriter, int numberOfSkills, 
-			List<Entry<String, Integer>> topTags)	throws IOException {
+			List<Entry<String, Integer>> topTags) throws IOException {
 		
 		StringBuffer buffer = new StringBuffer();
 		buffer.append(sector).append(Constants.COMMA);

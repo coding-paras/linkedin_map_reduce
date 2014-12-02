@@ -144,7 +144,7 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 		}
 
 		try {
-			int startYear = Integer.parseInt(startDate.split(Constants.DATE_SPLITTER)[0]);
+			int startYear = Integer.parseInt(startDate.split(Constants.DATE_DELIMITER_1)[0]);
 			//considering only the data after START_YEAR of records
 			startYear = (startYear < Constants.START_YEAR ? Constants.START_YEAR : startYear);
 
@@ -158,7 +158,7 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 				return;
 			} else {
 
-				endYear = Integer.parseInt(endDate.split(Constants.DATE_SPLITTER)[0]);
+				endYear = Integer.parseInt(endDate.split(Constants.DATE_DELIMITER_1)[0]);
 			}
 
 			//incrementing the relevant counters
