@@ -109,7 +109,7 @@ public class DataModelJobRunner {
 					values = line.split(Constants.COMMA);
 					
 					String sector = industryToSector.get(values[0]);
-					
+
 					if (sector ==  null) {
 						continue;
 					}

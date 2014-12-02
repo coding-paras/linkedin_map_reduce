@@ -178,6 +178,10 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 	private void createModelStructure(String sector) {
 		
 		List<String> tags = topTagsPerSector.get(sector);
+		
+		if (tags == null) {
+			tags = new ArrayList<String>();
+		}
 
 		index = 0;
 
