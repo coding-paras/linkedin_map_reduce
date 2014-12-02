@@ -8,6 +8,8 @@ public class Constants {
 	public static final String EMPTY_STRING = "";
 	public static final String PLUS = "\\+";
 	
+	public static final String SECOND_OUTPUT_FOLDER = "SECOND_OUTPUT_FOLDER";
+	
 	public static final int END_YEAR = 2012;
 	public static final String INDUSTRY_SECTOR_FILE = "industry_sector_file";
 	public static final int START_YEAR = 1980;

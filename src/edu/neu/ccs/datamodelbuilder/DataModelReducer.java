@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
@@ -25,6 +26,7 @@ import weka.core.Attribute;
 import weka.core.FastVector;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.core.SerializationHelper;
 
 import com.google.gson.Gson;
 
@@ -137,8 +139,14 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 			
 			try {
 				//outputs the DataModel
-				multipleOutputs.write(Constants.DATA_MODEL_TAG, NullWritable.get(), new Text(year + Constants.COMMA + sector + 
-						Constants.COMMA + new String(getClassifier())));
+				/*multipleOutputs.write(Constants.DATA_MODEL_TAG, NullWritable.get(), new Text(year + Constants.COMMA + sector + 
+						Constants.COMMA + new String(getClassifier())));*/
+				SerializationHelper.write("/tmp/dataModel" + key.toString(), getClassifier());
+				Configuration conf = context.getConfiguration();
+				FileSystem.get(conf).copyFromLocalFile(new Path("/tmp/dataModel" + key.toString()), 
+						new Path(conf.get(Constants.SECOND_OUTPUT_FOLDER) + File.separator + key.toString()));
+				new File("/tmp/dataModel" + key.toString()).delete();
+				
 			} catch (Exception e) {
 
 				logger.error(e);
@@ -156,11 +164,13 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 		tagAttributeMap.clear();
 	}
 
-	private String getClassifier() throws Exception {
+	//private String getClassifier() throws Exception {
+	private Classifier getClassifier() throws Exception {
 		
 		Classifier cModel = (Classifier) new NaiveBayes();
 		cModel.buildClassifier(trainingSet);
-		return UtilHelper.serialize(cModel);
+		//return UtilHelper.serialize(cModel);
+		return cModel;
 	}
 
 	private Set<String> populateTagsAndSetClassifier(UserProfile userProfile, String year) {

@@ -54,14 +54,12 @@ public class PredcitorReducer extends
 	private ClassLabel classLabel;
 	
 	@Override
-	protected void setup(Context context) throws IOException,
-			InterruptedException {
+	protected void setup(Context context) throws IOException, InterruptedException {
 		
 		super.setup(context);
 
 		String modelsFile = Constants.MODELS + System.currentTimeMillis();
-		FileSystem.get(context.getConfiguration()).copyToLocalFile(
-				new Path(Constants.MODELS), new Path(modelsFile));
+		FileSystem.get(context.getConfiguration()).copyToLocalFile(new Path(Constants.MODELS), new Path(modelsFile));
 
 		try {
 			models = new HashMap<String, List<Classifier>>();
@@ -74,8 +72,8 @@ public class PredcitorReducer extends
 		tagAttribute = new HashMap<String, Integer>();
 	}
 
-	private Map<String, List<String>> populateTagsFromCache(
-			Configuration configuration) throws IOException {
+	private Map<String, List<String>> populateTagsFromCache(Configuration configuration) throws IOException {
+		
 		Map<String, List<String>> topTagsPerSector = new HashMap<String, List<String>>();
 
 		Path[] localFiles = DistributedCache.getLocalCacheFiles(configuration);

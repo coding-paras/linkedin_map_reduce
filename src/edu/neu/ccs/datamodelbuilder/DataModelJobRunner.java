@@ -56,7 +56,7 @@ public class DataModelJobRunner {
 		job.setMapOutputValueClass(UserProfile.class);
 
 		MultipleOutputs.addNamedOutput(job, Constants.PRUNED_DATA_TAG, TextOutputFormat.class, NullWritable.class, Text.class);
-		MultipleOutputs.addNamedOutput(job, Constants.DATA_MODEL_TAG, TextOutputFormat.class, NullWritable.class, Text.class);
+		//MultipleOutputs.addNamedOutput(job, Constants.DATA_MODEL_TAG, TextOutputFormat.class, NullWritable.class, Text.class);
 		MultipleOutputs.addNamedOutput(job, Constants.TEST_DATA_TAG, TextOutputFormat.class, NullWritable.class, Text.class);
 		
 		FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
@@ -141,6 +141,9 @@ public class DataModelJobRunner {
 		fs.copyFromLocalFile(new Path(Constants.TOP_TAGS_SECTOR), new Path(otherArgs[4] + File.separator + Constants.TOP_TAGS_FILE_TAG));
 		
 		fs.close();
+		
+		//TODO - change the name
+		job.getConfiguration().set(Constants.SECOND_OUTPUT_FOLDER, otherArgs[4]);
 		
 		//Displaying the counters and their values
 		System.exit(job.waitForCompletion(true) ? 0 : 1);
