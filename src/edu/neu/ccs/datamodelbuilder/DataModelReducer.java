@@ -82,7 +82,7 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 
 		if (!year.equals(context.getConfiguration().get(Constants.TEST_YEAR, "2012"))) {
 
-			if (sector == null) {
+			if (sector == null || sector.equals("null")) {
 				
 				context.getCounter("DATAMODEL", "NULL-SECTOR").increment(1);
 				//TODO - change the logic?
