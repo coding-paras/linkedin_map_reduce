@@ -1,12 +1,8 @@
 package edu.neu.ccs.util;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -98,38 +94,5 @@ public class UtilHelper {
 			industryToSector.put(words[0], words[1]);
 		}
 		bufferedReader.close();
-	}
-
-	public static String serialize(Object obj) throws IOException {
-		
-		ByteArrayOutputStream b = null;
-		try {
-			
-			b = new ByteArrayOutputStream();
-			ObjectOutputStream o = new ObjectOutputStream(b);
-			o.writeObject(obj);
-			
-			return new String(b.toByteArray());
-		} finally {
-			if (b != null) {
-				b.close();
-			}
-		}
-	}
-
-	public static Object deserialize(String obj) throws IOException, ClassNotFoundException {
-		
-		ByteArrayInputStream b = null;
-		try {
-			
-			b = new ByteArrayInputStream(obj.getBytes());
-			ObjectInputStream o = new ObjectInputStream(b);
-			
-			return o.readObject();
-		} finally {
-			if (b != null) {
-				b.close();
-			}
-		}
 	}
 }

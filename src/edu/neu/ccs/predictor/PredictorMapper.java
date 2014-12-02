@@ -13,30 +13,29 @@ import com.google.gson.reflect.TypeToken;
 
 import edu.neu.ccs.objects.UserProfile;
 
-public class PredcitorMapper extends Mapper<Object, Text, Text, UserProfile> {
+public class PredictorMapper extends Mapper<Object, Text, Text, UserProfile> {
 
 	private Gson gson;
 	private Type userProfileType;
 
-	private static Logger logger = Logger.getLogger(PredcitorMapper.class);
+	private static Logger logger = Logger.getLogger(PredictorMapper.class);
 
 	@Override
-	protected void setup(Context context) throws IOException,
-			InterruptedException {
+	protected void setup(Context context) throws IOException, InterruptedException {
+		
 		gson = new Gson();
-		userProfileType = new TypeToken<UserProfile>() {
-		}.getType();
+		userProfileType = new TypeToken<UserProfile>() {}.getType();
 	}
 
 	@Override
-	protected void map(Object key, Text value, Context context)
-			throws IOException, InterruptedException {
+	protected void map(Object key, Text value, Context context) throws IOException, InterruptedException {
 
 		try {
-			UserProfile userProfile = gson.fromJson(value.toString(),
-					userProfileType);
+			
+			UserProfile userProfile = gson.fromJson(value.toString(), userProfileType);
 
 			context.write(new Text(userProfile.getIndustry()), userProfile);
+			
 		} catch (JsonSyntaxException jse) {
 			logger.error(jse);
 			return;

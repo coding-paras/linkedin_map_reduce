@@ -20,6 +20,9 @@ public class Constants {
 	public static final String YEAR_COUNTER_GRP = "YEAR";
 	public static final String PRUNED_DATA = "#PD#";
 	
+	public static final String MODULE = "MODULE";
+	public static final String NULL_SECTOR = "NULL_SECTOR";
+	
 	// JOB 1 output names
 	public static final String TAG_INDUSTRY = "tagindustry";
 	public static final String TOP_TAGS = "toptags";
