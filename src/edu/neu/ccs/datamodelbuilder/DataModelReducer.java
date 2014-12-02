@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -25,7 +26,6 @@ import weka.core.FastVector;
 import weka.core.Instance;
 import weka.core.Instances;
 
-import com.google.common.collect.Iterators;
 import com.google.gson.Gson;
 
 import edu.neu.ccs.constants.Constants;
@@ -84,11 +84,16 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 
 			createModelStructure(sector);
 
-			trainingSet = new Instances("trainingSet", wekaAttributes, Iterators.size(values.iterator()));
+			List<UserProfile> userProfiles = new ArrayList<UserProfile>();
+			for (Iterator<UserProfile> iterator = values.iterator(); iterator.hasNext();) {
+				
+				userProfiles.add(iterator.next());
+			}
+			trainingSet = new Instances("trainingSet", wekaAttributes, userProfiles.size());
 			trainingSet.setClassIndex(index - 1);
 
 			Instance data = new Instance(index);
-			for (UserProfile userProfile : values) {
+			for (UserProfile userProfile : userProfiles) {
 
 				int currentIndex = 0;
 				Set<String> tags = populateTagsAndSetClassifier(userProfile, year);
@@ -178,10 +183,6 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 	private void createModelStructure(String sector) {
 		
 		List<String> tags = topTagsPerSector.get(sector);
-		
-		if (tags == null) {
-			tags = new ArrayList<String>();
-		}
 
 		index = 0;
 

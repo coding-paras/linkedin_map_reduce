@@ -15,7 +15,6 @@ public class Constants {
 	public static final String UNIQUE_INDUSTRIES_KEY_TAG = "#I#";
 	public static final String YEAR_COUNTER_GRP = "YEAR";
 	public static final String PRUNED_DATA = "#PD#";
-	public static final String DATE_SECONDARY_SPLITTER = "/";
 	
 	// JOB 1 output names
 	public static final String TAG_INDUSTRY = "tagindustry";
