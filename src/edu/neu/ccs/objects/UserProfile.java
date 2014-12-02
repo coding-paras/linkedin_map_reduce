@@ -13,6 +13,8 @@ import org.apache.hadoop.io.WritableComparable;
 
 import com.google.gson.annotations.SerializedName;
 
+import edu.neu.ccs.constants.Constants;
+
 /**
  * Sample record: 
  * {
@@ -159,11 +161,11 @@ public class UserProfile implements WritableComparable<UserProfile> {
 	@Override
 	public void write(DataOutput out) throws IOException {
 		
-		out.writeUTF(this.firstName != null ? this.firstName : "");
-		out.writeUTF(this.lastName != null ? this.lastName : "");
+		out.writeUTF(this.firstName != null ? this.firstName : Constants.EMPTY_STRING);
+		out.writeUTF(this.lastName != null ? this.lastName : Constants.EMPTY_STRING);
 		out.writeUTF(this.numOfConnections != null ? this.numOfConnections : "0");
-		out.writeUTF(this.industry != null ? this.industry : "");
-		out.writeUTF(this.location != null ? this.location : "");
+		out.writeUTF(this.industry != null ? this.industry : Constants.EMPTY_STRING);
+		out.writeUTF(this.location != null ? this.location : Constants.EMPTY_STRING);
 		out.writeInt(this.skillSet.size()); //skill count
 		for(String skill : this.skillSet) {
 			

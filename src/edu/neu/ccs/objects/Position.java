@@ -11,6 +11,8 @@ import org.apache.hadoop.io.WritableComparable;
 
 import com.google.gson.annotations.SerializedName;
 
+import edu.neu.ccs.constants.Constants;
+
 /**
  * Class that holds position information of an employee.
  * 
@@ -111,12 +113,12 @@ public class Position implements WritableComparable<Position> {
 	@Override
 	public void write(DataOutput dataOutput) throws IOException {
 		
-		dataOutput.writeUTF(summary != null ? summary : "");
-		dataOutput.writeUTF(title != null ? title : "");
-		dataOutput.writeUTF(companyName != null ? companyName : "");
+		dataOutput.writeUTF(summary != null ? summary : Constants.EMPTY_STRING);
+		dataOutput.writeUTF(title != null ? title : Constants.EMPTY_STRING);
+		dataOutput.writeUTF(companyName != null ? companyName : Constants.EMPTY_STRING);
 		dataOutput.writeBoolean(isCurrent);
-		dataOutput.writeUTF(startDate != null ? startDate : "");
-		dataOutput.writeUTF(endDate != null ? endDate : "");
+		dataOutput.writeUTF(startDate != null ? startDate : Constants.EMPTY_STRING);
+		dataOutput.writeUTF(endDate != null ? endDate : Constants.EMPTY_STRING);
 
 	}
 

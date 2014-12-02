@@ -65,8 +65,7 @@ public class DataModelMapper extends Mapper<Object, Text, Text, UserProfile> {
 			}
 
 			for (UserProfile userProfile : userProfileList) {
-				
-				// Pruning
+
 				assignSectorAndEmitData(userProfile, context);
 			}
 		} catch(JsonSyntaxException jse)	{
@@ -93,6 +92,7 @@ public class DataModelMapper extends Mapper<Object, Text, Text, UserProfile> {
 		
 		//removing + from the number of connections //TODO - move to job 1
 		if (userProfile.getNumOfConnections() != null) {
+			
 			userProfile.setNumOfConnections(userProfile.getNumOfConnections().replaceAll(Constants.PLUS, Constants.EMPTY_STRING));
 		}
 		//setting the sector/industry

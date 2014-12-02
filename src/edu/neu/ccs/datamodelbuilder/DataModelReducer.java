@@ -82,6 +82,12 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 
 		if (!year.equals(context.getConfiguration().get(Constants.TEST_YEAR, "2012"))) {
 
+			if (sector == null) {
+				
+				context.getCounter("DATAMODEL", "NULL-SECTOR").increment(1);
+				//TODO - change the logic?
+				return;
+			}
 			createModelStructure(sector);
 
 			List<UserProfile> userProfiles = new ArrayList<UserProfile>();
