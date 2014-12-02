@@ -41,7 +41,7 @@ public class DataModelJobRunner {
 		String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
 
 		if (otherArgs.length != 5) {
-			System.err.println("Usage: datamodelbuilder <in> <out> <cache> <output_job1_folder> <top_tag_sector_folder>");
+			System.err.println("Usage: datamodelbuilder <in> <out> <industry_sector_csv> <output_job1_folder> <top_tag_sector_folder>");
 			System.exit(4);
 		}
 
@@ -74,7 +74,9 @@ public class DataModelJobRunner {
 		FileSystem fs = FileSystem.get(job.getConfiguration());
 		FileStatus[] status = fs.listStatus(new Path(otherArgs[3]));
 		
-		Map<String, String> industryToSector = UtilHelper.populateIndustryToSector(job.getConfiguration());
+		Map<String, String> industryToSector = new HashMap<String, String>();
+		UtilHelper.retrieveIndustrySectorMap(industryToSector, new Path(otherArgs[2]));
+		
 		Map<String, Map<String, Integer>> topTagsSector = new HashMap<String, Map<String, Integer>>();
 	
 		BufferedWriter tagIndustryWriter = new BufferedWriter(new FileWriter(Constants.TAG_INDUSTRY_FILE));

@@ -110,12 +110,13 @@ public class Position implements WritableComparable<Position> {
 
 	@Override
 	public void write(DataOutput dataOutput) throws IOException {
-		dataOutput.writeUTF(summary);
-		dataOutput.writeUTF(title);
-		dataOutput.writeUTF(companyName);
+		
+		dataOutput.writeUTF(summary != null ? summary : "");
+		dataOutput.writeUTF(title != null ? title : "");
+		dataOutput.writeUTF(companyName != null ? companyName : "");
 		dataOutput.writeBoolean(isCurrent);
-		dataOutput.writeUTF(startDate);
-		dataOutput.writeUTF(endDate);
+		dataOutput.writeUTF(startDate != null ? startDate : "");
+		dataOutput.writeUTF(endDate != null ? endDate : "");
 
 	}
 

@@ -97,8 +97,13 @@ public class DataModelMapper extends Mapper<Object, Text, Text, UserProfile> {
 		userProfile.setIndustry(sector);
 		for (Position position : userProfile.getPositions()) {
 			
+			if (position.getStartDate() == null) {
+				
+				continue;
+			}
 			startYear = Integer.parseInt(position.getStartDate().split(Constants.DATE_SPLITTER)[0]);
-			endYear = Integer.parseInt(position.getEndDate().split(Constants.DATE_SPLITTER)[0]);
+			endYear = (position.getEndDate() == null ? Constants.END_YEAR : 
+				Integer.parseInt(position.getEndDate().split(Constants.DATE_SPLITTER)[0]));
 			
 			if (startYear < finalStartYear) {
 				finalStartYear = startYear;

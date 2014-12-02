@@ -159,11 +159,11 @@ public class UserProfile implements WritableComparable<UserProfile> {
 	@Override
 	public void write(DataOutput out) throws IOException {
 		
-		out.writeUTF(this.firstName);
-		out.writeUTF(this.lastName);
-		out.writeUTF(this.numOfConnections);
-		out.writeUTF(this.industry);
-		out.writeUTF(this.location);
+		out.writeUTF(this.firstName != null ? this.firstName : "");
+		out.writeUTF(this.lastName != null ? this.lastName : "");
+		out.writeUTF(this.numOfConnections != null ? this.numOfConnections : "");
+		out.writeUTF(this.industry != null ? this.industry : "");
+		out.writeUTF(this.location != null ? this.location : "");
 		out.writeInt(this.skillSet.size()); //skill count
 		for(String skill : this.skillSet) {
 			
@@ -174,7 +174,7 @@ public class UserProfile implements WritableComparable<UserProfile> {
 
 			position.write(out);
 		}
-		out.writeInt(this.relevantExperience);
+		out.writeInt(this.relevantExperience != null ? this.relevantExperience : 0);
 	}
 
 	@Override
