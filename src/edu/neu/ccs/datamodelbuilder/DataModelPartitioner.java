@@ -6,9 +6,8 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Partitioner;
 
 import edu.neu.ccs.constants.Constants;
-import edu.neu.ccs.objects.UserProfile;
 
-public class DataModelPartitioner extends Partitioner<Text, UserProfile> {
+public class DataModelPartitioner extends Partitioner<Text, Text> {
 
 	private Random random;
 	public DataModelPartitioner() {
@@ -18,7 +17,7 @@ public class DataModelPartitioner extends Partitioner<Text, UserProfile> {
 
 	
 	@Override
-    public int getPartition(Text key, UserProfile value, int numReduceTasks) {
+    public int getPartition(Text key, Text value, int numReduceTasks) {
 
 		String[] values = key.toString().split(Constants.COMMA);
 
