@@ -78,8 +78,7 @@ public class DataModelReducer extends Reducer<Text, Text, NullWritable, Text> {
 
 			for (Text value : values) {
 
-				multipleOutputs.write(Constants.PRUNED_DATA_TAG,
-						NullWritable.get(), value);
+				multipleOutputs.write(Constants.PRUNED_DATA_TAG, NullWritable.get(), value);
 			}
 			return;
 		}

@@ -94,6 +94,10 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 		if (userProfile.getNumOfConnections() != null) {
 			
 			userProfile.setNumOfConnections(userProfile.getNumOfConnections().replaceAll(Constants.PLUS, Constants.EMPTY_STRING));
+		} 
+		else {
+			
+			userProfile.setNumOfConnections("0");
 		}
 		//setting the sector/industry
 		userProfile.setIndustry(sector);
