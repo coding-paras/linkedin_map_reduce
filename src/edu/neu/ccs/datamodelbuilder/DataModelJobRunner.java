@@ -55,8 +55,8 @@ public class DataModelJobRunner {
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(UserProfile.class);
 		
-		job.setGroupingComparatorClass(GroupComparator.class);
-		job.setSortComparatorClass(KeyComparator.class);
+		job.setGroupingComparatorClass(DataModelGroupComparator.class);
+		job.setSortComparatorClass(DataModelKeyComparator.class);
 
 		MultipleOutputs.addNamedOutput(job, Constants.PRUNED_DATA_TAG, TextOutputFormat.class, NullWritable.class, Text.class);
 		//MultipleOutputs.addNamedOutput(job, Constants.DATA_MODEL_TAG, TextOutputFormat.class, NullWritable.class, Text.class);

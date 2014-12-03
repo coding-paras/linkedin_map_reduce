@@ -7,15 +7,12 @@ import org.apache.hadoop.io.WritableComparator;
 
 import edu.neu.ccs.constants.Constants;
 
-public class GroupComparator extends WritableComparator {
+public class DataModelGroupComparator extends WritableComparator {
 
-	protected GroupComparator() {
+	protected DataModelGroupComparator() {
 		super(Text.class, true);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	@SuppressWarnings("rawtypes")
 	@Override
 	public int compare(WritableComparable writableComparable1,
@@ -23,9 +20,10 @@ public class GroupComparator extends WritableComparator {
 		Text yearSector1 = (Text) writableComparable1;
 		Text yearSector2 = (Text) writableComparable2;
 
-		if (yearSector1.toString().contains(Constants.PRUNED_DATA)
-				|| yearSector2.toString().contains(Constants.PRUNED_DATA)) {
-			return 0;
+		if (yearSector1.toString().contains(Constants.PRUNED_DATA) || 
+				yearSector2.toString().contains(Constants.PRUNED_DATA)) {
+
+			return yearSector1.compareTo(yearSector2);
 		}
 
 		String sector1 = yearSector1.toString().split(Constants.COMMA)[1];

@@ -67,8 +67,7 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 	}
 
 	@Override
-	protected void reduce(Text key, Iterable<UserProfile> values, Context context)
- throws IOException, InterruptedException {
+	protected void reduce(Text key, Iterable<UserProfile> values, Context context) throws IOException, InterruptedException {
 
 		// outputs pruned data
 		if (key.toString().contains(Constants.PRUNED_DATA)) {
@@ -100,11 +99,12 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 			List<UserProfile> userProfiles = new ArrayList<UserProfile>();
 			Classifier classifier = null;
 			for (UserProfile userProfile : values) {
+				
 				currentYear = key.toString().split(Constants.COMMA)[1];
 
 				if (!currentYear.equals(previousYear)) {
-					classifier = machineLearn(userProfiles, context,
-							previousYear, sector);
+					
+					classifier = machineLearn(userProfiles, context, previousYear, sector);
 					if (classifier != null) {
 						classfiers.add(classifier);
 					}
@@ -142,8 +142,7 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 			Configuration conf = context.getConfiguration();
 			FileSystem.get(conf).copyFromLocalFile(
 					new Path("/tmp/" + sector),
-					new Path(conf.get(Constants.SECOND_OUTPUT_FOLDER)
-							+ File.separator + sector));
+					new Path(conf.get(Constants.SECOND_OUTPUT_FOLDER) + File.separator + sector));
 			new File("/tmp/" + sector).delete();
 
 		} catch (Exception e) {
@@ -155,12 +154,12 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 	private Classifier machineLearn(List<UserProfile> userProfiles, Context context, String year, String sector) throws Exception {
 		
 		if (year.equals(context.getConfiguration().get(Constants.TEST_YEAR,"2012"))) {
+			
 			emitTestData(userProfiles);
 			return null;
 		}
 
-		trainingSet = new Instances("trainingSet", wekaAttributes,
-				userProfiles.size());
+		trainingSet = new Instances("trainingSet", wekaAttributes, userProfiles.size());
 		trainingSet.setClassIndex(index - 1);
 
 		Instance data = new Instance(index);
@@ -171,41 +170,33 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 
 			if (userProfile.getPositions().size() > 0) {
 
-				data.setValue(
-						(Attribute) wekaAttributes.elementAt(currentIndex),
+				data.setValue((Attribute) wekaAttributes.elementAt(currentIndex),
 						Integer.parseInt(userProfile.getNumOfConnections()));
 				currentIndex++;
 
 				for (Entry<String, Integer> entry : tagAttributeMap.entrySet()) {
+					
 					if (tags.contains(entry.getKey())) {
-						data.setValue(
-								(Attribute) wekaAttributes
-										.elementAt(tagAttributeMap.get(entry
-												.getKey())), ClassLabel.YES
-										.toString());
+						
+						data.setValue((Attribute) wekaAttributes.elementAt(tagAttributeMap.get(entry.getKey())), 
+								ClassLabel.YES.toString());
 					} else {
-						data.setValue(
-								(Attribute) wekaAttributes
-										.elementAt(tagAttributeMap.get(entry
-												.getKey())), ClassLabel.NO
-										.toString());
+						
+						data.setValue((Attribute) wekaAttributes.elementAt(tagAttributeMap.get(entry.getKey())), 
+								ClassLabel.NO.toString());
 					}
 					currentIndex++;
 				}
 
-				data.setValue(
-						(Attribute) wekaAttributes.elementAt(currentIndex),
+				data.setValue((Attribute) wekaAttributes.elementAt(currentIndex),
 						sector);
-
 				currentIndex++;
 
-				data.setValue(
-						(Attribute) wekaAttributes.elementAt(currentIndex),
+				data.setValue((Attribute) wekaAttributes.elementAt(currentIndex),
 						userProfile.getRelevantExperience());
 				currentIndex++;
 
-				data.setValue(
-						(Attribute) wekaAttributes.elementAt(currentIndex),
+				data.setValue((Attribute) wekaAttributes.elementAt(currentIndex),
 						classLabel.toString());
 				currentIndex++;
 
@@ -217,6 +208,7 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 	}
 
 	private void emitTestData(List<UserProfile> userProfiles) throws IOException, InterruptedException {
+		
 		for (UserProfile userprofile : userProfiles) {
 			// outputs the test data
 			multipleOutputs.write(Constants.TEST_DATA_TAG, NullWritable.get(),
