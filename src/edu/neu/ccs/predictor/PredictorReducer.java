@@ -2,7 +2,6 @@ package edu.neu.ccs.predictor;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -195,9 +194,11 @@ public class PredictorReducer extends Reducer<Text, UserProfile, NullWritable, T
 	
 	private void extractDataModels(Path sectorFilePath) throws Exception {
 		
-		Classifier[] sectorClassifiers = (Classifier[]) SerializationHelper.readAll(sectorFilePath.toString());
+		Object[] sectorClassifiers = SerializationHelper.readAll(sectorFilePath.toString());
 		
-		this.sectorDataModels.addAll(Arrays.asList(sectorClassifiers));
+		for (Object object : sectorClassifiers) {
+			this.sectorDataModels.add((Classifier)object);
+		}
 	}
 
 	@SuppressWarnings("unchecked")
