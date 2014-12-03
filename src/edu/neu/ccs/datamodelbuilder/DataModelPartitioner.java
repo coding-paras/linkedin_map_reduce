@@ -19,16 +19,13 @@ public class DataModelPartitioner extends Partitioner<Text, UserProfile> {
 	
 	@Override
     public int getPartition(Text key, UserProfile value, int numReduceTasks) {
-		
+
 		String[] values = key.toString().split(Constants.COMMA);
-		
+
 		if (values[0].contains(Constants.PRUNED_DATA)) {
-			
+
 			return random.nextInt(numReduceTasks);
-		} else {
-			
-			return Integer.parseInt(values[0]) % numReduceTasks;
-						
 		}
+		return values[1].hashCode() % numReduceTasks;
 	}
 }

@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -53,6 +52,8 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 	//data model attributes
 	private ClassLabel classLabel;
 	
+	private List<Classifier> classfiers;
+	
 	@Override
 	protected void setup(Context context) throws IOException, InterruptedException {
 		multipleOutputs = new MultipleOutputs<NullWritable, Text>(context);
@@ -62,106 +63,164 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 		topTagsPerSectorFile = Constants.TOP_TAGS_SECTOR + System.currentTimeMillis();
 		FileSystem.get(context.getConfiguration()).copyToLocalFile(new Path(Constants.TOP_TAGS_SECTOR), new Path(topTagsPerSectorFile));
 		topTagsPerSector = UtilHelper.populateKeyValues(topTagsPerSectorFile);
+		classfiers = new ArrayList<Classifier>();
 	}
 
 	@Override
 	protected void reduce(Text key, Iterable<UserProfile> values, Context context)
-			throws IOException, InterruptedException {
-		
+ throws IOException, InterruptedException {
+
 		// outputs pruned data
 		if (key.toString().contains(Constants.PRUNED_DATA)) {
 
 			for (UserProfile userProfile : values) {
-				
-				multipleOutputs.write(Constants.PRUNED_DATA_TAG, NullWritable.get(), new Text(gson.toJson(userProfile)));
-			}	
+
+				multipleOutputs.write(Constants.PRUNED_DATA_TAG,
+						NullWritable.get(), new Text(gson.toJson(userProfile)));
+			}
 			return;
 		}
-		
-		String keyValues[] = key.toString().split(Constants.COMMA);
-		String year = keyValues[0];
-		String sector = keyValues[1];
 
-		if (!year.equals(context.getConfiguration().get(Constants.TEST_YEAR, "2012"))) {
+		String sector = key.toString().split(Constants.COMMA)[1];
 
-			if (sector == null || sector.equals("null")) {
-				
-				context.getCounter("DATAMODEL", "NULL-SECTOR").increment(1);
-				//TODO - change the logic?
-				return;
-			}
-			createModelStructure(sector);
+		if (sector == null || sector.equals("null")) {
+
+			context.getCounter("DATAMODEL", "NULL-SECTOR").increment(1);
+			// TODO - change the logic?
+			return;
+		}
+
+		createModelStructure(sector);
+
+		try {
+
+			String previousYear = key.toString().split(Constants.COMMA)[0];
+			String currentYear = key.toString().split(Constants.COMMA)[0];
 
 			List<UserProfile> userProfiles = new ArrayList<UserProfile>();
-			for (Iterator<UserProfile> iterator = values.iterator(); iterator.hasNext();) {
-				
-				userProfiles.add(iterator.next());
-			}
-			trainingSet = new Instances("trainingSet", wekaAttributes, userProfiles.size());
-			trainingSet.setClassIndex(index - 1);
+			Classifier classifier = null;
+			for (UserProfile userProfile : values) {
+				currentYear = key.toString().split(Constants.COMMA)[1];
 
-			Instance data = new Instance(index);
-			for (UserProfile userProfile : userProfiles) {
-
-				int currentIndex = 0;
-				Set<String> tags = populateTagsAndSetClassifier(userProfile, year);
-
-				if (userProfile.getPositions().size() > 0) {
-
-					data.setValue((Attribute) wekaAttributes.elementAt(currentIndex),
-							Integer.parseInt(userProfile.getNumOfConnections()));
-					currentIndex++;
-
-					for (Entry<String, Integer> entry : tagAttributeMap.entrySet()) {
-						if (tags.contains(entry.getKey())) {
-							data.setValue((Attribute) wekaAttributes.elementAt(tagAttributeMap.get(entry.getKey())),
-									ClassLabel.YES.toString());
-						} else {
-							data.setValue((Attribute) wekaAttributes.elementAt(tagAttributeMap.get(entry.getKey())),
-									ClassLabel.NO.toString());
-						}
-						currentIndex++;
+				if (!currentYear.equals(previousYear)) {
+					classifier = machineLearn(userProfiles, context,
+							previousYear, sector);
+					if (classifier != null) {
+						classfiers.add(classifier);
 					}
-
-					data.setValue((Attribute) wekaAttributes.elementAt(currentIndex), sector);
-
-					currentIndex++;
-
-					data.setValue((Attribute) wekaAttributes.elementAt(currentIndex), userProfile.getRelevantExperience());
-					currentIndex++;
-
-					data.setValue((Attribute) wekaAttributes.elementAt(currentIndex),classLabel.toString());
-					currentIndex++;
-
-					trainingSet.add(data);
+					userProfiles.clear();
+					userProfiles.add(userProfile);
+					previousYear = currentYear;
+				} else {
+					userProfiles.add(userProfile);
 				}
 			}
-			
-			try {
-				//outputs the DataModel
-				/*multipleOutputs.write(Constants.DATA_MODEL_TAG, NullWritable.get(), new Text(year + Constants.COMMA + sector + 
-						Constants.COMMA + new String(getClassifier())));*/
-				SerializationHelper.write("/tmp/dataModel" + key.toString(), getClassifier());
-				Configuration conf = context.getConfiguration();
-				FileSystem.get(conf).copyFromLocalFile(new Path("/tmp/dataModel" + key.toString()), 
-						new Path(conf.get(Constants.SECOND_OUTPUT_FOLDER) + File.separator + key.toString()));
-				new File("/tmp/dataModel" + key.toString()).delete();
-				
-			} catch (Exception e) {
 
-				logger.error(e);
-			}
-		}
-		else {
-			//Test data
-			for (UserProfile userprofile : values) {
-
-				//outputs the test data
-				multipleOutputs.write(Constants.TEST_DATA_TAG, NullWritable.get(), new Text(gson.toJson(userprofile)));
-			}
+			machineLearn(userProfiles, context, previousYear, sector);
+			serializeClassifiers(sector, context);
+			classfiers.clear();
+			tagAttributeMap.clear();
+		} catch (Exception e) {
+			logger.error(e);
 		}
 
-		tagAttributeMap.clear();
+	}
+
+	private void serializeClassifiers(String sector, Context context) {
+		Classifier[] classifierObjects = new Classifier[classfiers.size()];		
+		
+		for (int i = 0; i < classifierObjects.length; i++) {
+			classifierObjects[i] = classfiers.get(i);			
+		}
+
+		try {
+			// outputs the DataModel
+			SerializationHelper.writeAll("/tmp/" + sector,classifierObjects);
+
+			Configuration conf = context.getConfiguration();
+			FileSystem.get(conf).copyFromLocalFile(
+					new Path("/tmp/" + sector),
+					new Path(conf.get(Constants.SECOND_OUTPUT_FOLDER)
+							+ File.separator + sector));
+			new File("/tmp/" + sector).delete();
+
+		} catch (Exception e) {
+
+			logger.error(e);
+		}
+		
+	}
+
+	private Classifier machineLearn(List<UserProfile> userProfiles, Context context, String year, String sector) throws Exception {
+		
+		if (year.equals(context.getConfiguration().get(Constants.TEST_YEAR,"2012"))) {
+			emitTestData(userProfiles);
+			return null;
+		}
+
+		trainingSet = new Instances("trainingSet", wekaAttributes,
+				userProfiles.size());
+		trainingSet.setClassIndex(index - 1);
+
+		Instance data = new Instance(index);
+		for (UserProfile userProfile : userProfiles) {
+
+			int currentIndex = 0;
+			Set<String> tags = populateTagsAndSetClassifier(userProfile, year);
+
+			if (userProfile.getPositions().size() > 0) {
+
+				data.setValue(
+						(Attribute) wekaAttributes.elementAt(currentIndex),
+						Integer.parseInt(userProfile.getNumOfConnections()));
+				currentIndex++;
+
+				for (Entry<String, Integer> entry : tagAttributeMap.entrySet()) {
+					if (tags.contains(entry.getKey())) {
+						data.setValue(
+								(Attribute) wekaAttributes
+										.elementAt(tagAttributeMap.get(entry
+												.getKey())), ClassLabel.YES
+										.toString());
+					} else {
+						data.setValue(
+								(Attribute) wekaAttributes
+										.elementAt(tagAttributeMap.get(entry
+												.getKey())), ClassLabel.NO
+										.toString());
+					}
+					currentIndex++;
+				}
+
+				data.setValue(
+						(Attribute) wekaAttributes.elementAt(currentIndex),
+						sector);
+
+				currentIndex++;
+
+				data.setValue(
+						(Attribute) wekaAttributes.elementAt(currentIndex),
+						userProfile.getRelevantExperience());
+				currentIndex++;
+
+				data.setValue(
+						(Attribute) wekaAttributes.elementAt(currentIndex),
+						classLabel.toString());
+				currentIndex++;
+
+				trainingSet.add(data);
+			}
+		}
+		
+		return getClassifier();
+	}
+
+	private void emitTestData(List<UserProfile> userProfiles) throws IOException, InterruptedException {
+		for (UserProfile userprofile : userProfiles) {
+			// outputs the test data
+			multipleOutputs.write(Constants.TEST_DATA_TAG, NullWritable.get(),
+					new Text(gson.toJson(userprofile)));
+		}
 	}
 
 	//private String getClassifier() throws Exception {
