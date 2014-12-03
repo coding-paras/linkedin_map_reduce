@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -24,9 +25,6 @@ import weka.core.FastVector;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.SerializationHelper;
-
-import com.google.common.collect.Iterators;
-
 import edu.neu.ccs.constants.Constants;
 import edu.neu.ccs.constants.Constants.ClassLabel;
 import edu.neu.ccs.objects.ConfusionMatrix;
@@ -57,8 +55,11 @@ public class PredictorReducer extends Reducer<Text, UserProfile, NullWritable, T
 		super.setup(context);
 		
 		module = context.getConfiguration().get(Constants.MODULE, "PREDICTOR");
+		
 		this.sectorDataModels = new ArrayList<Classifier>();
+		
 		topTagsPerSector = populateTagsFromCache(context.getConfiguration());
+		
 		tagAttribute = new HashMap<String, Integer>();
 	}
 
@@ -110,11 +111,16 @@ public class PredictorReducer extends Reducer<Text, UserProfile, NullWritable, T
 		
 		createModelStructure(key.toString());
 
-		testingSet = new Instances("testingSet", wekaAttributes, Iterators.size(values.iterator()));
+		List<UserProfile> userProfiles = new ArrayList<UserProfile>();
+		for (Iterator<UserProfile> iterator = values.iterator(); iterator.hasNext();) {
+			
+			userProfiles.add(iterator.next());
+		}
+		testingSet = new Instances("testingSet", wekaAttributes, userProfiles.size());
 		testingSet.setClassIndex(index - 1);
 
 		Instance data = new Instance(index);
-		for (UserProfile userProfile : values) {
+		for (UserProfile userProfile : userProfiles) {
 			
 			int currentIndex = 0;
 
@@ -221,7 +227,6 @@ public class PredictorReducer extends Reducer<Text, UserProfile, NullWritable, T
 				context.getCounter(ConfusionMatrix.TRUE_POSITIVE).increment(1);
 			}
 		}
-
 	}
 
 	private double predictHelper(Instance instance, List<Classifier> sectorModels) throws Exception {
