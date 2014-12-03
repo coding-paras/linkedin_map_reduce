@@ -23,7 +23,7 @@ import edu.neu.ccs.objects.Position;
 import edu.neu.ccs.objects.UserProfile;
 import edu.neu.ccs.util.UtilHelper;
 
-public class DataModelMapper extends Mapper<Object, Text, Text, UserProfile> {
+public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 
 	private static Logger logger = Logger.getLogger(DataModelMapper.class);
 	
@@ -152,11 +152,11 @@ public class DataModelMapper extends Mapper<Object, Text, Text, UserProfile> {
 			newUserProfile = new UserProfile(userProfile.getFirstName(), userProfile.getLastName(), userProfile.getNumOfConnections(),
 					userProfile.getIndustry(), userProfile.getLocation(), userProfile.getSkillSet(), positionsPerYearSector.get(key));
 			newUserProfile.setRelevantExperience(i - finalStartYear);
-			context.write(new Text(key), newUserProfile);
+			context.write(new Text(key), new Text(gson.toJson(newUserProfile)));
 		}
 		
 		//Pruned data
-		context.write(new Text(Constants.PRUNED_DATA), userProfile);
+		context.write(new Text(Constants.PRUNED_DATA), new Text(gson.toJson(userProfile)));
 	}
 	
 	private String getMaxSector(UserProfile userProfile) {

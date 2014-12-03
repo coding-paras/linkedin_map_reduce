@@ -32,12 +32,12 @@ public class DataModelKeyComparator extends WritableComparator {
 		Integer year1 = Integer.parseInt(yearSector1.toString().split(Constants.COMMA)[0]);
 		Integer year2 = Integer.parseInt(yearSector2.toString().split(Constants.COMMA)[0]);
 
-		int cmp = new CompareToBuilder().append(year1, year2).toComparison();
+		int cmp = new CompareToBuilder().append(sector1, sector2).toComparison();
 
 		if (cmp != 0) {
 			return cmp;
 		}
-		return new CompareToBuilder().append(sector1, sector2).toComparison();
+		return new CompareToBuilder().append(year1, year2).toComparison();
 
 	}
 }

@@ -53,7 +53,7 @@ public class DataModelJobRunner {
 		job.setPartitionerClass(DataModelPartitioner.class);
 
 		job.setMapOutputKeyClass(Text.class);
-		job.setMapOutputValueClass(UserProfile.class);
+		job.setMapOutputValueClass(Text.class);
 		
 		job.setGroupingComparatorClass(DataModelGroupComparator.class);
 		job.setSortComparatorClass(DataModelKeyComparator.class);

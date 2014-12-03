@@ -2,6 +2,7 @@ package edu.neu.ccs.datamodelbuilder;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,6 +29,7 @@ import weka.core.Instances;
 import weka.core.SerializationHelper;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import edu.neu.ccs.constants.Constants;
 import edu.neu.ccs.constants.Constants.ClassLabel;
@@ -36,7 +38,7 @@ import edu.neu.ccs.objects.Sector;
 import edu.neu.ccs.objects.UserProfile;
 import edu.neu.ccs.util.UtilHelper;
 
-public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, Text> {
+public class DataModelReducer extends Reducer<Text, Text, NullWritable, Text> {
 
 	private static Logger logger = Logger.getLogger(DataModelReducer.class);
 	
@@ -44,6 +46,7 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 	private Map<String, List<String>> topTagsPerSector;
 	private String topTagsPerSectorFile;
 	private Gson gson;
+	private Type userProfileType;
 	private FastVector wekaAttributes;
 	private Map<String, Integer> tagAttributeMap;
 	private Instances trainingSet;
@@ -58,6 +61,7 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 	protected void setup(Context context) throws IOException, InterruptedException {
 		multipleOutputs = new MultipleOutputs<NullWritable, Text>(context);
 		gson = new Gson();
+		userProfileType = new TypeToken<UserProfile>() {}.getType();
 		tagAttributeMap = new HashMap<String, Integer>();
 		
 		topTagsPerSectorFile = Constants.TOP_TAGS_SECTOR + System.currentTimeMillis();
@@ -67,22 +71,22 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 	}
 
 	@Override
-	protected void reduce(Text key, Iterable<UserProfile> values, Context context) throws IOException, InterruptedException {
+	protected void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
 
 		// outputs pruned data
 		if (key.toString().contains(Constants.PRUNED_DATA)) {
 
-			for (UserProfile userProfile : values) {
+			for (Text value : values) {
 
 				multipleOutputs.write(Constants.PRUNED_DATA_TAG,
-						NullWritable.get(), new Text(gson.toJson(userProfile)));
+						NullWritable.get(), value);
 			}
 			return;
 		}
 
 		String sector = key.toString().split(Constants.COMMA)[1];
 
-		if (sector == null || sector.equals("null")) {
+		if (sector == null || sector.trim().isEmpty() || sector.equals("null")) {
 
 			context.getCounter("DATAMODEL", "NULL-SECTOR").increment(1);
 			// TODO - change the logic?
@@ -94,14 +98,14 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 		try {
 
 			String previousYear = key.toString().split(Constants.COMMA)[0];
-			String currentYear = key.toString().split(Constants.COMMA)[0];
+			String currentYear = previousYear;
 
 			List<UserProfile> userProfiles = new ArrayList<UserProfile>();
 			Classifier classifier = null;
-			for (UserProfile userProfile : values) {
+			for (Text value : values) {
 				
-				currentYear = key.toString().split(Constants.COMMA)[1];
-
+				currentYear = key.toString().split(Constants.COMMA)[0];
+				UserProfile userProfile = (UserProfile) gson.fromJson(value.toString(), userProfileType);
 				if (!currentYear.equals(previousYear)) {
 					
 					classifier = machineLearn(userProfiles, context, previousYear, sector);
@@ -111,17 +115,24 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 					userProfiles.clear();
 					userProfiles.add(userProfile);
 					previousYear = currentYear;
-				} else {
+				} 
+				else {
 					userProfiles.add(userProfile);
 				}
 			}
 
-			machineLearn(userProfiles, context, previousYear, sector);
+			classifier = machineLearn(userProfiles, context, previousYear, sector);
+			if (classifier != null) {
+				classfiers.add(classifier);
+			}
+			
 			serializeClassifiers(sector, context);
+			
+			//reset
 			classfiers.clear();
 			tagAttributeMap.clear();
 		} catch (Exception e) {
-			System.out.println(e);
+			
 			logger.error(e);
 		}
 
@@ -146,19 +157,20 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 			new File("/tmp/" + sector).delete();
 
 		} catch (Exception e) {
+			
 			logger.error(e);
 		}
 		
 	}
 
 	private Classifier machineLearn(List<UserProfile> userProfiles, Context context, String year, String sector) throws Exception {
-		
+
 		if (year.equals(context.getConfiguration().get(Constants.TEST_YEAR,"2012"))) {
 			
 			emitTestData(userProfiles);
 			return null;
 		}
-
+		
 		trainingSet = new Instances("trainingSet", wekaAttributes, userProfiles.size());
 		trainingSet.setClassIndex(index - 1);
 
@@ -209,10 +221,10 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 
 	private void emitTestData(List<UserProfile> userProfiles) throws IOException, InterruptedException {
 		
-		for (UserProfile userprofile : userProfiles) {
+		for (UserProfile userProfile : userProfiles) {
 			// outputs the test data
 			multipleOutputs.write(Constants.TEST_DATA_TAG, NullWritable.get(),
-					new Text(gson.toJson(userprofile)));
+					new Text(gson.toJson(userProfile)));
 		}
 	}
 
