@@ -121,12 +121,14 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 			classfiers.clear();
 			tagAttributeMap.clear();
 		} catch (Exception e) {
+			System.out.println(e);
 			logger.error(e);
 		}
 
 	}
 
 	private void serializeClassifiers(String sector, Context context) {
+		
 		Classifier[] classifierObjects = new Classifier[classfiers.size()];		
 		
 		for (int i = 0; i < classifierObjects.length; i++) {
@@ -145,7 +147,6 @@ public class DataModelReducer extends Reducer<Text, UserProfile, NullWritable, T
 			new File("/tmp/" + sector).delete();
 
 		} catch (Exception e) {
-
 			logger.error(e);
 		}
 		
