@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,9 +52,6 @@ public class DataModelJobRunner {
 		job.setReducerClass(DataModelReducer.class);
 		job.setPartitionerClass(DataModelPartitioner.class);
 		
-		job.getConfiguration().addResource(new Path("/hadoop/projects/hadoop-1.0.3/conf/core-site.xml"));
-		job.getConfiguration().addResource(new Path("/hadoop/projects/hadoop-1.0.3/conf/hdfs-site.xml"));
-
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(Text.class);
 		
@@ -85,7 +83,7 @@ public class DataModelJobRunner {
 		
 		Map<String, Map<String, Integer>> topTagsSector = new HashMap<String, Map<String, Integer>>();
 	
-		BufferedWriter tagIndustryWriter = new BufferedWriter(new FileWriter(new Path(Constants.TAG_INDUSTRY_FILE).toString()));
+		BufferedWriter tagIndustryWriter = new BufferedWriter(new OutputStreamWriter(fs.create(new Path(Constants.TAG_INDUSTRY_FILE))));
 
 		BufferedReader bufferedReader = null;
 		Path filePath = null;
