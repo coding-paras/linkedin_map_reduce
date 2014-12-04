@@ -2,22 +2,12 @@ package edu.neu.ccs.datamodelbuilder;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -31,7 +21,6 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
 import edu.neu.ccs.constants.Constants;
-import edu.neu.ccs.util.UtilHelper;
 
 public class DataModelJobRunner {
 
@@ -64,86 +53,27 @@ public class DataModelJobRunner {
 		FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
 		FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
 
-		// Setting distributed cache of industry to sector mapping.
-		DistributedCache.addCacheFile(new URI(otherArgs[2]), job.getConfiguration());
-		
-		job.getConfiguration().set(Constants.INDUSTRY_SECTOR_FILE, otherArgs[2]); //DistributedCache filename
-		
 		//Setting the test_year for the data set
 		job.getConfiguration().set(Constants.TEST_YEAR, "2012");
 		
-		//Distributed Cache - HDFS Output from Job1
-		FileSystem s3fs = FileSystem.get(URI.create(otherArgs[3]), job.getConfiguration());
-		FileStatus[] status = s3fs.listStatus(new Path(otherArgs[3]));
-		
+		// Creating hdfs file system
 		FileSystem hdfs = FileSystem.get(job.getConfiguration());
 		
-		Map<String, String> industryToSector = new HashMap<String, String>();
+		//Reading sectors file (secturhunt.csv)
+		String secturhuntFile = otherArgs[2];
+		secturhuntFile = secturhuntFile.substring(secturhuntFile.lastIndexOf("/") + 1);
 		
-		UtilHelper.retrieveIndustrySectorMap(industryToSector, new Path(otherArgs[2]), job.getConfiguration());
+		FileSystem s3fs = FileSystem.get(URI.create(otherArgs[2]), job.getConfiguration());
+		FileStatus[] status = s3fs.listStatus(new Path(otherArgs[2]));
+		readFileIntoHDFS(hdfs, s3fs, status, secturhuntFile, Constants.SECTOR_HUNT);
 		
-		Map<String, Map<String, Integer>> topTagsSector = new HashMap<String, Map<String, Integer>>();
-	
-		BufferedWriter tagSectorWriter = new BufferedWriter(new OutputStreamWriter(hdfs.create(new Path(Constants.TAG_SECTOR_FILE))));
-
-		BufferedReader bufferedReader = null;
-		Path filePath = null;
-		Map<String, Integer> tags;
+		//Reading job 2 outputs (tagSector and sectorTopTags)
+		s3fs = FileSystem.get(URI.create(otherArgs[3]), job.getConfiguration());
+		status = s3fs.listStatus(new Path(otherArgs[3]));
 		
-		for (int i=0;i<status.length;i++){
-			
-			filePath = status[i].getPath();
-			bufferedReader = new BufferedReader(new InputStreamReader(s3fs.open(filePath)));
-			
-			if (filePath.getName().contains(Constants.TAG_SECTOR)) {
-				
-				String line;
-				while ((line=bufferedReader.readLine()) != null){
-					
-					tagSectorWriter.write(line);
-					tagSectorWriter.write("\n");
-				}
-				bufferedReader.close();
-				
-			} else if (filePath.getName().contains(Constants.TOP_TAGS)) {
-				
-				String line;
-				String values[];
-				while ((line=bufferedReader.readLine()) != null){
-					
-					values = line.split(Constants.COMMA);
-					
-					String sector = industryToSector.get(values[0]);
-
-					if (sector ==  null) {
-						continue;
-					}
-					
-					tags = topTagsSector.get(sector);
-					
-					if (tags == null) {
-						tags = new HashMap<String, Integer>();
-						topTagsSector.put(sector, tags);
-					}
-					
-					for (int j = 1; j < values.length; j++) {
-						String tag = values[j];
-						int count = 1;
-						if (tags.get(tag) != null) {
-							count = tags.get(tag) + 1;
-						}
-						tags.put(tag, count);				
-					}
-				}
-				bufferedReader.close();
-			}
-		}
-		
-		tagSectorWriter.close();
-		
-		createTopIndustriesFile(topTagsSector);
-		
-		s3fs.copyFromLocalFile(new Path(Constants.TOP_TAGS_SECTOR), new Path(otherArgs[4] + File.separator + Constants.TOP_TAGS_FILE_TAG));
+		// TODO names of job 2
+		readFileIntoHDFS(hdfs, s3fs, status, "", Constants.TAG_SECTOR_FILE);
+		readFileIntoHDFS(hdfs, s3fs, status, "", Constants.TOP_TAGS_SECTOR);		
 		
 		//TODO - change the name
 		job.getConfiguration().set(Constants.SECOND_OUTPUT_FOLDER, otherArgs[4]);
@@ -154,53 +84,40 @@ public class DataModelJobRunner {
 		s3fs.close();
 		hdfs.close();
 	}
-	
-	private static void createTopIndustriesFile(Map<String, Map<String, Integer>> topTagsSector) throws IOException {
-		
-		BufferedWriter tagSectorWriter = new BufferedWriter(new FileWriter(Constants.TOP_TAGS_SECTOR));
 
-		Map<String, Integer> tags = null;
-		List<Map.Entry<String, Integer>> topTags = new ArrayList<Map.Entry<String, Integer>>();
-		
-		for (Map.Entry<String, Map<String, Integer>> entry : topTagsSector.entrySet()) {
+	private static void readFileIntoHDFS(FileSystem hdfs, FileSystem s3fs,
+			FileStatus[] status, String fileName, String pathToWrite)
+			throws IOException {
 
-			tags = entry.getValue();
+		BufferedWriter tagSectorWriter = null;
 
-			topTags.addAll(tags.entrySet());
+		BufferedReader bufferedReader = null;
+		Path filePath = null;
 
-			Collections.sort(topTags,
-					new Comparator<Map.Entry<String, Integer>>() {
+		for (int i = 0; i < status.length; i++) {
 
-						@Override
-						public int compare(Entry<String, Integer> entry1, Entry<String, Integer> entry2) {
+			filePath = status[i].getPath();
 
-							return -entry1.getValue().compareTo(entry2.getValue());
-						}
-					});
+			if (filePath.getName().contains(fileName)) {
 
-			if (topTags.size() >= 5) {
-				writeTopTagsPerSectorToFile(entry.getKey(), tagSectorWriter, 5, topTags);
-			} else {
-				writeTopTagsPerSectorToFile(entry.getKey(), tagSectorWriter, topTags.size(), topTags);
+				bufferedReader = new BufferedReader(new InputStreamReader(
+						s3fs.open(filePath)));
+
+				tagSectorWriter = new BufferedWriter(new OutputStreamWriter(
+						hdfs.create(new Path(pathToWrite))));
+
+				String line = null;
+
+				while ((line = bufferedReader.readLine()) != null) {
+
+					tagSectorWriter.write(line);
+					tagSectorWriter.write("\n");
+				}
+
+				bufferedReader.close();
+				tagSectorWriter.close();
 			}
-
-			topTags.clear();
 		}
+	}
 
-		tagSectorWriter.close();
-	}
-	
-	private static void writeTopTagsPerSectorToFile(String sector, final BufferedWriter tagSectorWriter, int numberOfSkills, 
-			List<Entry<String, Integer>> topTags) throws IOException {
-		
-		StringBuffer buffer = new StringBuffer();
-		buffer.append(sector).append(Constants.COMMA);
-		
-		for (int i = 0; i < numberOfSkills; i++) {
-			buffer.append(topTags.get(i).getKey()).append(Constants.COMMA);
-		}
-		
-		tagSectorWriter.write(buffer.toString().substring(0, buffer.length() - 1));
-		tagSectorWriter.write("\n");
-	}
 }

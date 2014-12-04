@@ -1,6 +1,8 @@
 package edu.neu.ccs.datamodelbuilder;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -36,7 +38,6 @@ import edu.neu.ccs.constants.Constants.ClassLabel;
 import edu.neu.ccs.objects.Position;
 import edu.neu.ccs.objects.Sector;
 import edu.neu.ccs.objects.UserProfile;
-import edu.neu.ccs.util.UtilHelper;
 
 public class DataModelReducer extends Reducer<Text, Text, NullWritable, Text> {
 
@@ -63,11 +64,37 @@ public class DataModelReducer extends Reducer<Text, Text, NullWritable, Text> {
 		gson = new Gson();
 		userProfileType = new TypeToken<UserProfile>() {}.getType();
 		tagAttributeMap = new HashMap<String, Integer>();
-		
-		topTagsPerSectorFile = Constants.TOP_TAGS_SECTOR + System.currentTimeMillis();
-		FileSystem.get(context.getConfiguration()).copyToLocalFile(new Path(Constants.TOP_TAGS_SECTOR), new Path(topTagsPerSectorFile));
-		topTagsPerSector = UtilHelper.populateKeyValues(topTagsPerSectorFile);
 		classfiers = new ArrayList<Classifier>();
+
+		// Reading tag to sector file.
+		Path topTagsPerSectorPath = new Path(Constants.TOP_TAGS_SECTOR + System.currentTimeMillis());
+		FileSystem.get(context.getConfiguration()).copyToLocalFile(new Path(Constants.TOP_TAGS_SECTOR), topTagsPerSectorPath);
+		poplulateMap(topTagsPerSectorPath, topTagsPerSector);
+	}
+
+	private void poplulateMap(Path path, Map<String, List<String>> map) throws IOException {
+
+		map = new HashMap<String, List<String>>();
+
+		BufferedReader bufferedReader = new BufferedReader(new FileReader(path.toString()));
+
+		String line;
+		String[] attributes = null;
+		List<String> values = null;
+		while((line = bufferedReader.readLine()) != null) {
+
+			attributes = line.split(Constants.COMMA);
+
+			values = new ArrayList<String>();
+			for (int i = 1; i < attributes.length; i++) {
+
+				values.add(attributes[i]);
+			}
+
+			map.put(attributes[0], values);
+		}
+
+		bufferedReader.close();
 	}
 
 	@Override
