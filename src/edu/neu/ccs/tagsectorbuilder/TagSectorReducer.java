@@ -1,5 +1,7 @@
 package edu.neu.ccs.tagsectorbuilder;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,12 +11,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 
 import edu.neu.ccs.constants.Constants;
-import edu.neu.ccs.util.UtilHelper;
 
 public class TagSectorReducer extends Reducer<Text, Text, NullWritable, Text> {
 
@@ -26,8 +29,23 @@ public class TagSectorReducer extends Reducer<Text, Text, NullWritable, Text> {
 			InterruptedException {
 
 		topSector = new HashMap<String, Integer>();
-		industryToSector = UtilHelper.populateIndustryToSector(context
-				.getConfiguration());
+		Path path = new Path("/tmp/sectors.csv");
+		FileSystem.get(context.getConfiguration()).copyToLocalFile(new Path(Constants.TAG_INDUSTRY_FILE), path);
+		populateindustryToSector(path);
+	}
+
+	private void populateindustryToSector(Path path) throws IOException {
+		industryToSector = new HashMap<String, String>();
+		BufferedReader bufferedReader =  new BufferedReader(new FileReader(path.toString()));
+		
+		String line = null;
+		String words[] = null;
+		while ((line = bufferedReader.readLine()) != null) {
+			
+			words = line.split(Constants.COMMA);
+			industryToSector.put(words[0], words[1]);
+		}
+		bufferedReader.close();		
 	}
 
 	@Override

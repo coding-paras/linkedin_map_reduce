@@ -3,11 +3,10 @@ package edu.neu.ccs.tagsectorbuilder;
 import java.net.URI;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -45,23 +44,35 @@ public class TagSectorJobRunner {
 		job.setOutputKeyClass(NullWritable.class);
 		job.setOutputValueClass(Text.class);
 
-		// Setting distributed cache of industry to sector mapping.
-		DistributedCache.addCacheFile(new URI(otherArgs[2]),job.getConfiguration());
+		FileSystem s3fs = FileSystem.get(URI.create(otherArgs[2]),job.getConfiguration());
+		//FileStatus[] status = s3fs.listStatus(new Path(otherArgs[2]));
+		
+		s3fs.copyFromLocalFile(new Path(otherArgs[2]), new Path(Constants.TAG_INDUSTRY_FILE));
 
-		job.getConfiguration().set(Constants.INDUSTRY_SECTOR_FILE, otherArgs[2]); // DistributedCache filename
+		/*FileSystem hdfs = FileSystem.get(job.getConfiguration());
+		Path filePath = null;
+		BufferedReader bufferedReader = null;
+		BufferedWriter tagSectorWriter = new BufferedWriter(new OutputStreamWriter(hdfs.create(new Path(Constants.TAG_INDUSTRY_FILE))));
+		
+		for (int i = 0; i < status.length; i++) {
+
+			filePath = status[i].getPath();
+			if (filePath.getName().contains("sectors.csv")) {
+				bufferedReader = new BufferedReader(new InputStreamReader(s3fs.open(filePath)));
+				String line;
+				while ((line = bufferedReader.readLine()) != null) {
+					tagSectorWriter.write(line);
+					tagSectorWriter.write("\n");
+				}
+				bufferedReader.close();
+			}
+		}
+		
+		tagSectorWriter.close();*/
 
 		FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
 		FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
-
-		// Displaying the counters and their values
-		if (job.waitForCompletion(true)) {
-
-			for (Counter counter : job.getCounters().getGroup(
-					Constants.YEAR_COUNTER_GRP)) {
-
-				System.out
-						.println(counter.getName() + "-" + counter.getValue());
-			}
-		}
+		
+		job.waitForCompletion(true);
 	}
 }
