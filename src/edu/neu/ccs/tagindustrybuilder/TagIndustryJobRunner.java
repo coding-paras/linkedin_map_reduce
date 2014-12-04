@@ -8,8 +8,6 @@ import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
-import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
 import edu.neu.ccs.constants.Constants;
@@ -41,8 +39,8 @@ public class TagIndustryJobRunner {
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(Text.class);
 		
-		MultipleOutputs.addNamedOutput(job, Constants.TAG_INDUSTRY, TextOutputFormat.class, NullWritable.class, Text.class);
-		MultipleOutputs.addNamedOutput(job, Constants.TOP_TAGS, TextOutputFormat.class, NullWritable.class, Text.class);
+		job.setOutputKeyClass(NullWritable.class);
+		job.setOutputValueClass(Text.class);
 		
 		FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
 		FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));

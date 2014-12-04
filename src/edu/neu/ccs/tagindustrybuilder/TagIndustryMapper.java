@@ -106,7 +106,6 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 			if (title != null && !title.trim().isEmpty()) {
 				title = filterTag(title);
 				if (!title.trim().isEmpty()) {
-					context.write(new Text(industry + Constants.COMMA + Constants.UNIQUE_INDUSTRIES_KEY_TAG), new Text(title));
 					context.write(new Text(title), new Text(industry));
 				}
 			}
@@ -192,7 +191,6 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 		for (String skill : skillSet) {
 			skill = filterTag(skill);
 			if (!skill.trim().isEmpty()) {
-				context.write(new Text(industry + Constants.COMMA + Constants.UNIQUE_INDUSTRIES_KEY_TAG), new Text(skill));
 				context.write(new Text(skill), new Text(industry));
 			}
 		}
