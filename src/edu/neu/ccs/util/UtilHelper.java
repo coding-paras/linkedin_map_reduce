@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -104,7 +103,7 @@ public class UtilHelper {
 
 	public static void retrieveIndustrySectorMap(Map<String, String> industryToSector, Path filePath, Configuration configuration)
 			throws IOException {
-		FileSystem fs = FileSystem.get(URI.create(filePath.toString()), configuration);
+		FileSystem fs = FileSystem.get(configuration);
 		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fs.open(filePath)));
 
 		String line = null;

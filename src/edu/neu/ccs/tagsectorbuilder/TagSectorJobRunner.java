@@ -53,11 +53,6 @@ public class TagSectorJobRunner {
 
 		FileSystem s3fs = FileSystem.get(URI.create(otherArgs[2]),job.getConfiguration());
 		FileStatus[] status = s3fs.listStatus(new Path(otherArgs[2]));
-		/*
-		s3fs.copyToLocalFile(new Path(otherArgs[2]), new Path(Constants.TAG_INDUSTRY_FILE));
-		FileSystem hdfs = FileSystem.get(job.getConfiguration());
-		hdfs.copyFromLocalFile(new Path(Constants.TAG_INDUSTRY_FILE), new Path(Constants.TAG_INDUSTRY_FILE));
-		job.getConfiguration().set(Constants.TAG_INDUSTRY, otherArgs[2]);*/
 
 		FileSystem hdfs = FileSystem.get(job.getConfiguration());
 		Path filePath = null;

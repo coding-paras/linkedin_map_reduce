@@ -72,8 +72,8 @@ public class DataModelJobRunner {
 		status = s3fs.listStatus(new Path(otherArgs[3]));
 		
 		// TODO names of job 2
-		readFileIntoHDFS(hdfs, s3fs, status, "", Constants.TAG_SECTOR_FILE);
-		readFileIntoHDFS(hdfs, s3fs, status, "", Constants.TOP_TAGS_SECTOR);		
+		readFileIntoHDFS(hdfs, s3fs, status, Constants.TAG_SECTOR, Constants.TAG_SECTOR_FILE);
+		readFileIntoHDFS(hdfs, s3fs, status, Constants.TOP_TAGS , Constants.TOP_TAGS_SECTOR);		
 		
 		//TODO - change the name
 		job.getConfiguration().set(Constants.SECOND_OUTPUT_FOLDER, otherArgs[4]);
