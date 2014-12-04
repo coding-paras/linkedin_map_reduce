@@ -18,8 +18,12 @@ public class Constants {
 	public static final String TOP_TAGS_SECTOR = "/tmp/top_tags_sector.txt";
 	public static final String SECTOR_HUNT = "/tmp/sector_hunt.csv";
 	public static final String MODELS = "/tmp/models.txt";
-	public static final String UNIQUE_INDUSTRIES_KEY_TAG = "#I#";
+	public static final String SECTOR_CSV = "/tmp/sector.csv";
 	public static final String YEAR_COUNTER_GRP = "YEAR";
+	
+	//Tags
+	public static final String INDUSTRY_TAG = "#IT#";
+	public static final String UNIQUE_INDUSTRIES_KEY_TAG = "#I#";
 	public static final String PRUNED_DATA = "#PD#";
 	
 	public static final String MODULE = "MODULE";
@@ -48,7 +52,9 @@ public class Constants {
 		}
 	}
 	public static final String TEST_YEAR = "testyear";
+	
 	// JOB 2 output names
+	
 	public static final String DATA_MODEL_TAG = "datamodel";
 	public static final String PRUNED_DATA_TAG = "pruneddata";
 	public static final String TEST_DATA_TAG = "testdata";

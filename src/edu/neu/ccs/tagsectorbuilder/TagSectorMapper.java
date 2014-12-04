@@ -27,7 +27,13 @@ public class TagSectorMapper extends Mapper<Object, Text, Text, Text> {
 		String tag = stringValue.split(Constants.COMMA)[0];
 		String industries = stringValue.substring(stringValue.indexOf(Constants.COMMA) + 1);
 
-		context.write(new Text(tag), new Text(industries));
+		Text outKey = new Text(tag);
+		context.write(outKey, new Text(industries));
+		
+		for (String industry : industries.split(Constants.COMMA)) {
+			
+			context.write(new Text(industry + Constants.COMMA + Constants.INDUSTRY_TAG), outKey);
+		}
 
 	}
 }
