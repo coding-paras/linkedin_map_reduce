@@ -97,5 +97,6 @@ public class UtilHelper {
 			industryToSector.put(words[0], words[1]);
 		}
 		bufferedReader.close();
+		fs.close();
 	}
 }

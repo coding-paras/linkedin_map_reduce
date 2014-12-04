@@ -74,8 +74,10 @@ public class DataModelJobRunner {
 		job.getConfiguration().set(Constants.TEST_YEAR, "2012");
 		
 		//Distributed Cache - HDFS Output from Job1
-		FileSystem fs = FileSystem.get(URI.create(otherArgs[3]), job.getConfiguration());
-		FileStatus[] status = fs.listStatus(new Path(otherArgs[3]));
+		FileSystem s3fs = FileSystem.get(URI.create(otherArgs[3]), job.getConfiguration());
+		FileStatus[] status = s3fs.listStatus(new Path(otherArgs[3]));
+		
+		FileSystem hdfs = FileSystem.get(job.getConfiguration());
 		
 		Map<String, String> industryToSector = new HashMap<String, String>();
 		
@@ -83,7 +85,7 @@ public class DataModelJobRunner {
 		
 		Map<String, Map<String, Integer>> topTagsSector = new HashMap<String, Map<String, Integer>>();
 	
-		BufferedWriter tagIndustryWriter = new BufferedWriter(new OutputStreamWriter(fs.create(new Path(Constants.TAG_INDUSTRY_FILE))));
+		BufferedWriter tagIndustryWriter = new BufferedWriter(new OutputStreamWriter(hdfs.create(new Path(Constants.TAG_INDUSTRY_FILE))));
 
 		BufferedReader bufferedReader = null;
 		Path filePath = null;
@@ -92,7 +94,7 @@ public class DataModelJobRunner {
 		for (int i=0;i<status.length;i++){
 			
 			filePath = status[i].getPath();
-			bufferedReader = new BufferedReader(new InputStreamReader(fs.open(filePath)));
+			bufferedReader = new BufferedReader(new InputStreamReader(s3fs.open(filePath)));
 			
 			if (filePath.getName().contains(Constants.TAG_INDUSTRY)) {
 				
@@ -140,17 +142,22 @@ public class DataModelJobRunner {
 		
 		tagIndustryWriter.close();
 		
+		/*DistributedCache.addCacheFile(new URI(otherArgs[2]), job.getConfiguration());
+		
+		job.getConfiguration().set(Constants.INDUSTRY_SECTOR_FILE, otherArgs[2]); //DistributedCache filename
+*/		
 		createTopIndustriesFile(topTagsSector);
 		
-		fs.copyFromLocalFile(new Path(Constants.TOP_TAGS_SECTOR), new Path(otherArgs[4] + File.separator + Constants.TOP_TAGS_FILE_TAG));
-		
-		fs.close();
+		s3fs.copyFromLocalFile(new Path(Constants.TOP_TAGS_SECTOR), new Path(otherArgs[4] + File.separator + Constants.TOP_TAGS_FILE_TAG));
 		
 		//TODO - change the name
 		job.getConfiguration().set(Constants.SECOND_OUTPUT_FOLDER, otherArgs[4]);
 		
 		//Displaying the counters and their values
-		System.exit(job.waitForCompletion(true) ? 0 : 1);
+		job.waitForCompletion(true);
+		
+		s3fs.close();
+		hdfs.close();
 	}
 	
 	private static void createTopIndustriesFile(Map<String, Map<String, Integer>> topTagsSector) throws IOException {
