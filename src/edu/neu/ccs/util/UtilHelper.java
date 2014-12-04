@@ -51,6 +51,24 @@ public class UtilHelper {
 		bufferedReader.close();
 		return map;
 	}
+	
+	public static Map<String, String> populateKeyValue(String fileName) throws IOException {
+
+		Map<String, String> map = new HashMap<String, String>();
+
+		BufferedReader bufferedReader = new BufferedReader(new FileReader(fileName));
+
+		String line;
+		String[] attributes = null;
+		while((line = bufferedReader.readLine()) != null) {
+
+			attributes = line.split(Constants.COMMA);
+			map.put(attributes[0], attributes[1]);
+		}
+
+		bufferedReader.close();
+		return map;
+	}
 
 	/**
 	 * Reads the industry to sector mapping file from distributed cache and

@@ -41,7 +41,7 @@ public class DataModelJobRunner {
 		String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
 
 		if (otherArgs.length != 5) {
-			System.err.println("Usage: datamodelbuilder <in> <out> <industry_sector_csv> <output_job1_folder> <top_tag_sector_folder>");
+			System.err.println("Usage: datamodelbuilder <in> <test_pruned_data_out> <industry_sector_csv> <job2_output_folder> <data_model_folder>");
 			System.exit(4);
 		}
 
@@ -59,7 +59,6 @@ public class DataModelJobRunner {
 		job.setSortComparatorClass(DataModelKeyComparator.class);
 
 		MultipleOutputs.addNamedOutput(job, Constants.PRUNED_DATA_TAG, TextOutputFormat.class, NullWritable.class, Text.class);
-		//MultipleOutputs.addNamedOutput(job, Constants.DATA_MODEL_TAG, TextOutputFormat.class, NullWritable.class, Text.class);
 		MultipleOutputs.addNamedOutput(job, Constants.TEST_DATA_TAG, TextOutputFormat.class, NullWritable.class, Text.class);
 		
 		FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
@@ -85,7 +84,7 @@ public class DataModelJobRunner {
 		
 		Map<String, Map<String, Integer>> topTagsSector = new HashMap<String, Map<String, Integer>>();
 	
-		BufferedWriter tagIndustryWriter = new BufferedWriter(new OutputStreamWriter(hdfs.create(new Path(Constants.TAG_INDUSTRY_FILE))));
+		BufferedWriter tagSectorWriter = new BufferedWriter(new OutputStreamWriter(hdfs.create(new Path(Constants.TAG_SECTOR_FILE))));
 
 		BufferedReader bufferedReader = null;
 		Path filePath = null;
@@ -96,13 +95,13 @@ public class DataModelJobRunner {
 			filePath = status[i].getPath();
 			bufferedReader = new BufferedReader(new InputStreamReader(s3fs.open(filePath)));
 			
-			if (filePath.getName().contains(Constants.TAG_INDUSTRY)) {
+			if (filePath.getName().contains(Constants.TAG_SECTOR)) {
 				
 				String line;
 				while ((line=bufferedReader.readLine()) != null){
 					
-					tagIndustryWriter.write(line);
-					tagIndustryWriter.write("\n");
+					tagSectorWriter.write(line);
+					tagSectorWriter.write("\n");
 				}
 				bufferedReader.close();
 				
@@ -140,12 +139,8 @@ public class DataModelJobRunner {
 			}
 		}
 		
-		tagIndustryWriter.close();
+		tagSectorWriter.close();
 		
-		/*DistributedCache.addCacheFile(new URI(otherArgs[2]), job.getConfiguration());
-		
-		job.getConfiguration().set(Constants.INDUSTRY_SECTOR_FILE, otherArgs[2]); //DistributedCache filename
-*/		
 		createTopIndustriesFile(topTagsSector);
 		
 		s3fs.copyFromLocalFile(new Path(Constants.TOP_TAGS_SECTOR), new Path(otherArgs[4] + File.separator + Constants.TOP_TAGS_FILE_TAG));

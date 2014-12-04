@@ -14,6 +14,7 @@ public class Constants {
 	public static final String INDUSTRY_SECTOR_FILE = "industry_sector_file";
 	public static final int START_YEAR = 1980;
 	public static final String TAG_INDUSTRY_FILE = "/tmp/tag_industries.txt";
+	public static final String TAG_SECTOR_FILE = "/tmp/tag_sector.txt";
 	public static final String TOP_TAGS_SECTOR = "/tmp/top_tags_sector.txt";
 	public static final String MODELS = "/tmp/models.txt";
 	public static final String UNIQUE_INDUSTRIES_KEY_TAG = "#I#";
@@ -25,6 +26,7 @@ public class Constants {
 	
 	// JOB 1 output names
 	public static final String TAG_INDUSTRY = "tagindustry";
+	public static final String TAG_SECTOR = "tagsector";
 	public static final String TOP_TAGS = "toptags";
 	
 	public enum ClassLabel {

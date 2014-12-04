@@ -28,8 +28,8 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 	private static Logger logger = Logger.getLogger(DataModelMapper.class);
 	
 	private Map<String, String> industryToSector;
-	private Map<String, List<String>> tagToIndustries;
-	private String tagIndustriesFile;
+	private Map<String, String> tagToSector;
+	private String tagSectorFile;
 	private Gson gson;
 	private Type userProfileListType;
 
@@ -38,10 +38,10 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 		
 		super.setup(context);
 		
-		tagIndustriesFile = Constants.TAG_INDUSTRY_FILE + System.currentTimeMillis();
-		FileSystem.get(context.getConfiguration()).copyToLocalFile(new Path(Constants.TAG_INDUSTRY_FILE), new Path(tagIndustriesFile));
+		tagSectorFile = Constants.TAG_SECTOR_FILE + System.currentTimeMillis();
+		FileSystem.get(context.getConfiguration()).copyToLocalFile(new Path(Constants.TAG_SECTOR_FILE), new Path(tagSectorFile));
 
-		tagToIndustries = UtilHelper.populateKeyValues(tagIndustriesFile);
+		tagToSector = UtilHelper.populateKeyValue(tagSectorFile);
 		
 		industryToSector = UtilHelper.populateIndustryToSector(context.getConfiguration());
 		
@@ -173,30 +173,23 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 		
 		for (String tag : tags) {
 
-			if (tagToIndustries.get(tag) == null) {
+			sector = tagToSector.get(tag);
+			if (sector == null) {
 
 				continue;
 			}
 
-			for (String industry : tagToIndustries.get(tag)) {
+			int count = 1;
+			if (sectorCount.get(sector) != null) {
 
-				int count = 1;
-				sector = industryToSector.get(industry);
-				if (sector == null) {
-
-					continue;
-				}
-				if (sectorCount.get(sector) != null) {
-
-					count = sectorCount.get(sector) + 1;
-				}
-				if (count > maxCount) {
-
-					maxCount = count;
-					maxSector = sector;
-				}
-				sectorCount.put(sector, count);
+				count = sectorCount.get(sector) + 1;
 			}
+			if (count > maxCount) {
+
+				maxCount = count;
+				maxSector = sector;
+			}
+			sectorCount.put(sector, count);
 		}		
 		return maxSector;
 	}
@@ -220,6 +213,6 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 		
 		super.cleanup(context);
 		
-		new File(tagIndustriesFile).delete();		
+		new File(tagSectorFile).delete();		
 	}
 }
