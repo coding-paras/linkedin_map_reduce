@@ -50,6 +50,9 @@ public class DataModelJobRunner {
 		job.setMapperClass(DataModelMapper.class);
 		job.setReducerClass(DataModelReducer.class);
 		job.setPartitionerClass(DataModelPartitioner.class);
+		
+		job.getConfiguration().addResource(new Path("/hadoop/projects/hadoop-1.0.3/conf/core-site.xml"));
+		job.getConfiguration().addResource(new Path("/hadoop/projects/hadoop-1.0.3/conf/hdfs-site.xml"));
 
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(Text.class);
@@ -73,11 +76,12 @@ public class DataModelJobRunner {
 		job.getConfiguration().set(Constants.TEST_YEAR, "2012");
 		
 		//Distributed Cache - HDFS Output from Job1
-		FileSystem fs = FileSystem.get(job.getConfiguration());
+		FileSystem fs = FileSystem.get(URI.create(otherArgs[3]), job.getConfiguration());
 		FileStatus[] status = fs.listStatus(new Path(otherArgs[3]));
 		
 		Map<String, String> industryToSector = new HashMap<String, String>();
-		UtilHelper.retrieveIndustrySectorMap(industryToSector, new Path(otherArgs[2]));
+		
+		UtilHelper.retrieveIndustrySectorMap(industryToSector, new Path(otherArgs[2]), job.getConfiguration());
 		
 		Map<String, Map<String, Integer>> topTagsSector = new HashMap<String, Map<String, Integer>>();
 	

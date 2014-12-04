@@ -3,6 +3,8 @@ package edu.neu.ccs.util;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,6 +12,7 @@ import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
 import edu.neu.ccs.constants.Constants;
@@ -69,22 +72,22 @@ public class UtilHelper {
 		
 		String industrySectorFile = configuration.get(Constants.INDUSTRY_SECTOR_FILE);
 		industrySectorFile = industrySectorFile.substring(industrySectorFile.lastIndexOf("/") + 1);
-
+		
 		for (Path path : localFiles) {
 
 			if (industrySectorFile.equals(path.getName())) {
-
-				retrieveIndustrySectorMap(industryToSector, path);
+				
+				retrieveIndustrySectorMap(industryToSector, path, configuration);
 				break;
 			}
 		}
 		return industryToSector;
 	}
 
-	public static void retrieveIndustrySectorMap(Map<String, String> industryToSector, Path filePath)
+	public static void retrieveIndustrySectorMap(Map<String, String> industryToSector, Path filePath, Configuration configuration)
 			throws IOException {
-		
-		BufferedReader bufferedReader = new BufferedReader(new FileReader(filePath.toString()));
+		FileSystem fs = FileSystem.get(URI.create(filePath.toString()), configuration);
+		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(fs.open(filePath)));
 
 		String line = null;
 		String words[] = null;
