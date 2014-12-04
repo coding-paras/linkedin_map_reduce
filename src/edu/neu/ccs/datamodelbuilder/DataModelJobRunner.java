@@ -85,7 +85,7 @@ public class DataModelJobRunner {
 		
 		Map<String, Map<String, Integer>> topTagsSector = new HashMap<String, Map<String, Integer>>();
 	
-		BufferedWriter tagIndustryWriter = new BufferedWriter(new FileWriter(Constants.TAG_INDUSTRY_FILE));
+		BufferedWriter tagIndustryWriter = new BufferedWriter(new FileWriter(new Path(Constants.TAG_INDUSTRY_FILE).toString()));
 
 		BufferedReader bufferedReader = null;
 		Path filePath = null;
