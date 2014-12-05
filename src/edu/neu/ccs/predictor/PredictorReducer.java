@@ -68,35 +68,7 @@ public class PredictorReducer extends Reducer<Text, UserProfile, NullWritable, T
 		FileSystem.get(context.getConfiguration()).copyToLocalFile(new Path(Constants.TOP_TAGS_SECTOR), topTagsPerSectorPath);
 		topTagsPerSector = UtilHelper.populateKeyValues(topTagsPerSectorPath.toString());
 		
-		topTagsPerSector = populateTagsFromCache(context.getConfiguration());
-		
 		tagAttribute = new HashMap<String, Integer>();
-	}
-
-	private Map<String, List<String>> populateTagsFromCache(Configuration configuration) throws IOException {
-		
-		Map<String, List<String>> topTagsPerSector = new HashMap<String, List<String>>();
-
-		Path[] localFiles = DistributedCache.getLocalCacheFiles(configuration);
-		if (localFiles == null) {
-
-			throw new RuntimeException("DistributedCache not present in HDFS");
-		}
-		
-		// TODO Same as job runner.
-		String topTagsFile = configuration.get(Constants.TOP_TAGS);
-		topTagsFile = topTagsFile.substring(topTagsFile.lastIndexOf("/") + 1);
-
-		for (Path path : localFiles) {
-
-			if (topTagsFile.equals(path.getName())) {
-				
-				topTagsPerSector = UtilHelper.populateKeyValues(path.toString());
-				break;
-			}
-		}
-
-		return topTagsPerSector;
 	}
 
 	@Override
