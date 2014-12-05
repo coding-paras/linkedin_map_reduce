@@ -101,8 +101,7 @@ public class DataModelJobRunner {
 
 			if (filePath.getName().contains(fileName)) {
 
-				bufferedReader = new BufferedReader(new InputStreamReader(
-						s3fs.open(filePath)));
+				bufferedReader = new BufferedReader(new InputStreamReader(s3fs.open(filePath)));
 
 				String line = null;
 

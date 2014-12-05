@@ -272,13 +272,13 @@ public class DataModelReducer extends Reducer<Text, Text, NullWritable, Text> {
 
 		List<Attribute> skills = new ArrayList<Attribute>();
 		Attribute skill = null;
-		FastVector skillVector = null;
+		FastVector tagVector = null;
 		for (String tag : tags) {
 			
-			skillVector = new FastVector(2);
-			skillVector.addElement(ClassLabel.YES.toString());
-			skillVector.addElement(ClassLabel.NO.toString());
-			skill = new Attribute(tag, skillVector);
+			tagVector = new FastVector(2);
+			tagVector.addElement(ClassLabel.YES.toString());
+			tagVector.addElement(ClassLabel.NO.toString());
+			skill = new Attribute(tag, tagVector);
 			skills.add(skill);
 			tagAttributeMap.put(tag, index);
 			index++;

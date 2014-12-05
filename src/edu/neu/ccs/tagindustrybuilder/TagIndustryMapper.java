@@ -163,8 +163,7 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 			//incrementing the relevant counters
 			for (int i = startYear; i <= endYear; i++) {
 
-				context.getCounter(Constants.YEAR_COUNTER_GRP, String.valueOf(i))
-				.increment(1);
+				context.getCounter(Constants.YEAR_COUNTER_GRP, String.valueOf(i)).increment(1);
 
 			}
 		} catch (NumberFormatException nfe) {
