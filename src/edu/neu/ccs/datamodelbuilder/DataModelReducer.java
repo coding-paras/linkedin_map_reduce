@@ -85,13 +85,16 @@ public class DataModelReducer extends Reducer<Text, Text, NullWritable, Text> {
 
 			attributes = line.split(Constants.COMMA);
 
-			values = new ArrayList<String>();
+			values = map.get(attributes[0]);
+			
+			if (values == null) {
+				values = new ArrayList<String>();
+				map.put(attributes[0], values);
+			}
 			for (int i = 1; i < attributes.length; i++) {
 
 				values.add(attributes[i]);
 			}
-
-			map.put(attributes[0], values);
 		}
 
 		bufferedReader.close();
