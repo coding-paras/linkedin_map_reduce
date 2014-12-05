@@ -72,7 +72,7 @@ public class TagIndustryMapper extends Mapper<Object, Text, Text, Text> {
 				
 				if (!industry.trim().isEmpty()) {
 					emitSkillTags(userProfile.getSkillSet(), industry, context);
-					emitTitleTags(userProfile.getPositions(), industry, context);
+					//emitTitleTags(userProfile.getPositions(), industry, context);
 				}
 			}
 		}

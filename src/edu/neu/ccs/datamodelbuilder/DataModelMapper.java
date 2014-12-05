@@ -205,10 +205,10 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 		
 		tags.addAll(userProfile.getSkillSet());
 		
-		for(Position position: userProfile.getPositions())
+		/*for(Position position: userProfile.getPositions())
 		{
 			tags.add(position.getTitle());
-		}
+		}*/
 		
 		return tags;
 	}

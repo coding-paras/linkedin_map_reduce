@@ -1,7 +1,13 @@
 package edu.neu.ccs.predictor;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.URI;
+
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -23,8 +29,8 @@ public class PredictorJobRunner {
 		String[] otherArgs = new GenericOptionsParser(conf, args)
 				.getRemainingArgs();
 
-		if (otherArgs.length != 3) {
-			System.err.println("Usage: predictor <in> <out> <models_top_tags_sector>");
+		if (otherArgs.length != 4) {
+			System.err.println("Usage: predictor <in> <out> <models> <top_tags_sector>");
 			System.exit(3);
 		}
 
@@ -42,29 +48,85 @@ public class PredictorJobRunner {
 
 		FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
 		FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
+		
+		// Creating hdfs file system
+		FileSystem hdfs = FileSystem.get(job.getConfiguration());
+		
+		// Reading models
+		FileSystem s3fs = FileSystem.get(URI.create(otherArgs[2]),job.getConfiguration());
+		FileStatus[] status = s3fs.listStatus(new Path(otherArgs[2]));
+		readModelFileIntoHDFS(hdfs, s3fs, status);
+		
+		// Reading job 2 outputs (tagSector and sectorTopTags)
+		s3fs = FileSystem.get(URI.create(otherArgs[3]), job.getConfiguration());
+		status = s3fs.listStatus(new Path(otherArgs[3]));
+		readFileIntoHDFS(hdfs, s3fs, status, Constants.TOP_TAGS , Constants.TOP_TAGS_SECTOR);	
+		
+		// Displaying the counters and their values
+		System.exit(job.waitForCompletion(true) ? 0 : 1);
+	}
+	
+	private static void readModelFileIntoHDFS(FileSystem hdfs, FileSystem s3fs,
+			FileStatus[] status) throws IOException {
 
-		// Distributed Cache - HDFS Output from Job1
-		FileSystem fs = FileSystem.get(job.getConfiguration());
-		FileStatus[] status = fs.listStatus(new Path(otherArgs[2]));
+		BufferedWriter tagSectorWriter = null;
 
+		BufferedReader bufferedReader = null;
 		Path filePath = null;
 
 		for (int i = 0; i < status.length; i++) {
 
 			filePath = status[i].getPath();
-			if (filePath.getName().contains(Constants.TOP_TAGS_FILE_TAG)) {
-				
-				// Setting distributed cache of industry to sector mapping.
-				DistributedCache.addCacheFile(filePath.toUri(), job.getConfiguration());
-				job.getConfiguration().set(Constants.TOP_TAGS, filePath.toString()); //DistributedCache filename				
-			} else {
-				
-				//data models
-				DistributedCache.addCacheFile(filePath.toUri(), job.getConfiguration());
+
+			tagSectorWriter = new BufferedWriter(
+					new OutputStreamWriter(hdfs.create(new Path(Constants.MODELS + filePath.getName()))));
+
+			bufferedReader = new BufferedReader(new InputStreamReader(s3fs.open(filePath)));
+
+			String line = null;
+
+			while ((line = bufferedReader.readLine()) != null) {
+
+				tagSectorWriter.write(line);
+				tagSectorWriter.write("\n");
+			}
+
+			bufferedReader.close();
+			tagSectorWriter.close();
+		}
+	}
+
+	private static void readFileIntoHDFS(FileSystem hdfs, FileSystem s3fs,
+			FileStatus[] status, String fileName, String pathToWrite)
+			throws IOException {
+
+		BufferedWriter tagSectorWriter =  new BufferedWriter(new OutputStreamWriter(hdfs.create(new Path(pathToWrite))));
+
+		BufferedReader bufferedReader = null;
+		Path filePath = null;
+		
+		for (int i = 0; i < status.length; i++) {
+
+			filePath = status[i].getPath();
+
+			if (filePath.getName().contains(fileName) || "".equals(fileName)) {
+
+				bufferedReader = new BufferedReader(new InputStreamReader(
+						s3fs.open(filePath)));
+
+
+
+				String line = null;
+
+				while ((line = bufferedReader.readLine()) != null) {
+
+					tagSectorWriter.write(line);
+					tagSectorWriter.write("\n");
+				}
+
+				bufferedReader.close();
 			}
 		}
-		
-		// Displaying the counters and their values
-		System.exit(job.waitForCompletion(true) ? 0 : 1);
+		tagSectorWriter.close();
 	}
 }
