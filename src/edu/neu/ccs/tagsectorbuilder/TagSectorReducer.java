@@ -1,7 +1,10 @@
 package edu.neu.ccs.tagsectorbuilder;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -168,8 +171,26 @@ public class TagSectorReducer extends Reducer<Text, Text, NullWritable, Text> {
 		
 		multipleOutputs.write(Constants.TAG_SECTOR, NullWritable.get(), 
 				new Text(tag + Constants.COMMA + collection.get(0).getKey()));
+		
+		testWriteToS3(context.getConfiguration());
 	}
 	
+	private void testWriteToS3(Configuration configuration) throws IOException {
+
+		FileSystem s3fs = FileSystem.get(URI.create("s3://linkedin.output/datamodels"), configuration);
+		
+		Path src = new Path("/tmp/test" + System.currentTimeMillis());
+		BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(src.toString()));
+		
+		bufferedWriter.write("Garbage");
+		bufferedWriter.close();
+		
+		
+		s3fs.copyFromLocalFile(src, new Path("s3://linkedin.output/datamodels" + File.separator + src.toString()));
+		new File(src.toString()).delete();
+		
+	}
+
 	@Override
 	protected void cleanup(Reducer<Text, Text, NullWritable, Text>.Context context)
 			throws IOException, InterruptedException {

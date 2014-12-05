@@ -3,6 +3,7 @@ package edu.neu.ccs.datamodelbuilder;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,7 +12,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
@@ -57,8 +57,11 @@ public class DataModelReducer extends Reducer<Text, Text, NullWritable, Text> {
 	
 	private List<Classifier> classfiers;
 	
+	FileSystem s3fs;
+	
 	@Override
 	protected void setup(Context context) throws IOException, InterruptedException {
+		s3fs = FileSystem.get(URI.create(context.getConfiguration().get(Constants.SECOND_OUTPUT_FOLDER)), context.getConfiguration());
 		multipleOutputs = new MultipleOutputs<NullWritable, Text>(context);
 		gson = new Gson();
 		userProfileType = new TypeToken<UserProfile>() {}.getType();
@@ -150,11 +153,10 @@ public class DataModelReducer extends Reducer<Text, Text, NullWritable, Text> {
 		try {
 			// outputs the DataModel
 			SerializationHelper.writeAll("/tmp/" + sector,classifierObjects);
-
-			Configuration conf = context.getConfiguration();
-			FileSystem.get(conf).copyFromLocalFile(
+			
+			s3fs.copyFromLocalFile(
 					new Path("/tmp/" + sector),
-					new Path(conf.get(Constants.SECOND_OUTPUT_FOLDER) + File.separator + sector));
+					new Path(context.getConfiguration().get(Constants.SECOND_OUTPUT_FOLDER) + File.separator + sector));
 			new File("/tmp/" + sector).delete();
 
 		} catch (Exception e) {
@@ -243,10 +245,10 @@ public class DataModelReducer extends Reducer<Text, Text, NullWritable, Text> {
 		List<Position> positions = userProfile.getPositions();
 		Set<String> tags = new HashSet<String>();
 		
-		for(Position position: positions) {
+		/*for(Position position: positions) {
 
 			tags.add(position.getTitle());
-		}
+		}*/
 		tags.addAll(userProfile.getSkillSet());
 		
 		if (positions.size() >= 2) {
@@ -320,6 +322,7 @@ public class DataModelReducer extends Reducer<Text, Text, NullWritable, Text> {
 		super.cleanup(context);
 
 		new File(topTagsPerSectorFile).delete();
+		multipleOutputs.close();
 		
 	}
 }
