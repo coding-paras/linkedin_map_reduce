@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
@@ -87,7 +86,7 @@ public class PredictorReducer extends Reducer<Text, UserProfile, NullWritable, T
 		} 
 		catch (Exception e) {
 			
-			//TODO - log the error
+			e.printStackTrace();
 			throw new RuntimeException("Error occurred while populating the data model");
 		}
 		
@@ -161,9 +160,9 @@ public class PredictorReducer extends Reducer<Text, UserProfile, NullWritable, T
 	private void populateSectorDataModels(String sector, Configuration conf) throws Exception {
 		
 		// Reading sector models
-		dataModelsFile = Constants.MODELS + System.currentTimeMillis();
+		dataModelsFile = Constants.MODELS + sector + System.currentTimeMillis();
 		Path dataModelsPath = new Path(dataModelsFile);
-		FileSystem.get(conf).copyToLocalFile(new Path(Constants.MODELS), dataModelsPath);
+		FileSystem.get(conf).copyToLocalFile(new Path(Constants.MODELS + sector), dataModelsPath);
 		extractDataModels(dataModelsPath);
 	}
 	
