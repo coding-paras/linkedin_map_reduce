@@ -1,8 +1,6 @@
 package edu.neu.ccs.datamodelbuilder;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -23,6 +21,7 @@ import com.google.gson.reflect.TypeToken;
 import edu.neu.ccs.constants.Constants;
 import edu.neu.ccs.objects.Position;
 import edu.neu.ccs.objects.UserProfile;
+import edu.neu.ccs.util.UtilHelper;
 
 public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 
@@ -30,7 +29,7 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 	
 	private Map<String, String> industryToSector;
 	private Map<String, String> tagToSector;
-	private String tagSectorFile;
+	private String tagSectorFile, industrySectorCSV;
 	private Gson gson;
 	private Type userProfileListType;
 
@@ -40,34 +39,21 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 		super.setup(context);
 		
 		// Reading tag to sector file.
-		Path tagToSectorPath = new Path(Constants.TAG_SECTOR_FILE + System.currentTimeMillis());
+		tagSectorFile = Constants.TAG_SECTOR_FILE + System.currentTimeMillis();
+		Path tagToSectorPath = new Path(tagSectorFile);
 		FileSystem.get(context.getConfiguration()).copyToLocalFile(new Path(Constants.TAG_SECTOR_FILE), tagToSectorPath);
-		poplulateMap(tagToSectorPath, tagToSector);
+		tagToSector = UtilHelper.populateKeyValue(tagToSectorPath.toString());
 		
 		// Reading tag to sector file.
-		Path industrySectorPath = new Path(Constants.SECTOR_HUNT+ System.currentTimeMillis());
+		industrySectorCSV = Constants.SECTOR_HUNT + System.currentTimeMillis();
+		Path industrySectorPath = new Path(industrySectorCSV);
 		FileSystem.get(context.getConfiguration()).copyToLocalFile(new Path(Constants.SECTOR_HUNT), industrySectorPath);
-		poplulateMap(industrySectorPath, industryToSector);	
+		industryToSector = UtilHelper.populateKeyValue(industrySectorPath.toString());	
 		
 		gson = new Gson();
 		userProfileListType = new TypeToken<List<UserProfile>>() {}.getType();
 	}
 	
-	private void poplulateMap(Path path, Map<String, String> map) throws IOException {
-		map = new HashMap<String, String>();
-		BufferedReader bufferedReader = new BufferedReader(new FileReader(path.toString()));
-
-		String line = null;
-		String values[] = null;
-		
-		while ((line = bufferedReader.readLine()) != null) {
-			values = line.split(Constants.COMMA);
-			map.put(values[0], values[1]);
-		}
-		
-		bufferedReader.close();
-	}
-
 	@Override
 	protected void map(Object key, Text value, Context context) throws IOException, InterruptedException {
 
@@ -232,6 +218,7 @@ public class DataModelMapper extends Mapper<Object, Text, Text, Text> {
 		
 		super.cleanup(context);
 		
-		new File(tagSectorFile).delete();		
+		new File(tagSectorFile).delete();
+		new File(industrySectorCSV).delete();
 	}
 }

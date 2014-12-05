@@ -30,7 +30,8 @@ public class DataModelJobRunner {
 		String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
 
 		if (otherArgs.length != 5) {
-			System.err.println("Usage: datamodelbuilder <in> <test_pruned_data_out> <industry_sector_csv> <job2_output_folder> <data_model_folder>");
+			System.err.println("Usage: datamodelbuilder <in> <test_pruned_data_out> <industry_sector_csv> "
+					+ "<job2_output_folder> <data_model_folder>");
 			System.exit(4);
 		}
 
@@ -89,8 +90,8 @@ public class DataModelJobRunner {
 			FileStatus[] status, String fileName, String pathToWrite)
 			throws IOException {
 
-		BufferedWriter tagSectorWriter = null;
-
+		BufferedWriter tagSectorWriter = new BufferedWriter(new OutputStreamWriter(
+				hdfs.create(new Path(pathToWrite))));
 		BufferedReader bufferedReader = null;
 		Path filePath = null;
 
@@ -103,9 +104,6 @@ public class DataModelJobRunner {
 				bufferedReader = new BufferedReader(new InputStreamReader(
 						s3fs.open(filePath)));
 
-				tagSectorWriter = new BufferedWriter(new OutputStreamWriter(
-						hdfs.create(new Path(pathToWrite))));
-
 				String line = null;
 
 				while ((line = bufferedReader.readLine()) != null) {
@@ -115,9 +113,9 @@ public class DataModelJobRunner {
 				}
 
 				bufferedReader.close();
-				tagSectorWriter.close();
 			}
 		}
+		tagSectorWriter.close();
 	}
 
 }

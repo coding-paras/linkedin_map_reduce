@@ -25,6 +25,6 @@ public class DataModelPartitioner extends Partitioner<Text, Text> {
 
 			return random.nextInt(numReduceTasks);
 		}
-		return values[1].hashCode() % numReduceTasks;
+		return Math.abs(values[1].hashCode()) % numReduceTasks;
 	}
 }
