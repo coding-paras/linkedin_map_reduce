@@ -2,6 +2,7 @@ package edu.neu.ccs.predictor;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -55,7 +56,16 @@ public class PredictorJobRunner {
 		// Reading models
 		FileSystem s3fs = FileSystem.get(URI.create(otherArgs[2]),job.getConfiguration());
 		FileStatus[] status = s3fs.listStatus(new Path(otherArgs[2]));
-		readModelFileIntoHDFS(hdfs, s3fs, status);
+		
+		Path filePath = null;
+		for (int i = 0; i < status.length; i++) {
+			filePath = status[i].getPath();
+			s3fs.copyToLocalFile(new Path(URI.create(otherArgs[2] + filePath.getName())), new Path(Constants.MODELS + filePath.getName() + "a"));
+			hdfs.copyFromLocalFile(new Path(Constants.MODELS + filePath.getName() + "a"), new Path(Constants.MODELS + filePath.getName()));
+			new File(Constants.MODELS + filePath.getName() + "a").delete();
+		}		
+		
+		//readModelFileIntoHDFS(hdfs, s3fs, status);
 		
 		// Reading job 2 outputs (tagSector and sectorTopTags)
 		s3fs = FileSystem.get(URI.create(otherArgs[3]), job.getConfiguration());
@@ -109,7 +119,7 @@ public class PredictorJobRunner {
 
 			filePath = status[i].getPath();
 
-			if (filePath.getName().contains(fileName) || "".equals(fileName)) {
+			if (filePath.getName().contains(fileName)) {
 
 				bufferedReader = new BufferedReader(new InputStreamReader(
 						s3fs.open(filePath)));

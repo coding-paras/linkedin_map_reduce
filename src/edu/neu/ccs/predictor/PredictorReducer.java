@@ -86,7 +86,7 @@ public class PredictorReducer extends Reducer<Text, UserProfile, NullWritable, T
 		} 
 		catch (Exception e) {
 			
-			e.printStackTrace();
+			//TODO - log the error
 			throw new RuntimeException("Error occurred while populating the data model");
 		}
 		
