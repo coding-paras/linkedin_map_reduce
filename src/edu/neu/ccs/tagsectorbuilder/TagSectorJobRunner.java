@@ -62,7 +62,7 @@ public class TagSectorJobRunner {
 		for (int i = 0; i < status.length; i++) {
 
 			filePath = status[i].getPath();
-			if (filePath.getName().contains("sectors.csv")) {
+			if (filePath.getName().contains(otherArgs[2].substring(otherArgs[2].lastIndexOf("/") + 1))) {
 				bufferedReader = new BufferedReader(new InputStreamReader(s3fs.open(filePath)));
 				String line;
 				while ((line = bufferedReader.readLine()) != null) {

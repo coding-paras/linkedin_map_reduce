@@ -1,5 +1,6 @@
 package edu.neu.ccs.tagsectorbuilder;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,6 +28,7 @@ public class TagSectorReducer extends Reducer<Text, Text, NullWritable, Text> {
 	private Map<String, Integer> tagCounts;
 	private StringBuffer buffer;
 	private MultipleOutputs<NullWritable, Text> multipleOutputs;
+	public String sectorFileName;
 
 	@Override
 	protected void setup(Context context) throws IOException, InterruptedException {
@@ -36,7 +38,8 @@ public class TagSectorReducer extends Reducer<Text, Text, NullWritable, Text> {
 		buffer = new StringBuffer();
 		multipleOutputs = new MultipleOutputs<NullWritable, Text>(context);
 		
-		Path path = new Path(Constants.SECTOR_CSV);
+		sectorFileName = Constants.SECTOR_CSV + System.currentTimeMillis();
+		Path path = new Path(sectorFileName);
 		Configuration conf = context.getConfiguration();
 		FileSystem.get(conf).copyToLocalFile(new Path(Constants.SECTOR_CSV), path);
 		
@@ -163,6 +166,16 @@ public class TagSectorReducer extends Reducer<Text, Text, NullWritable, Text> {
 			}
 		});
 		
-		context.write(NullWritable.get(), new Text(tag + Constants.COMMA + collection.get(0).getKey()));
+		multipleOutputs.write(Constants.TAG_SECTOR, NullWritable.get(), 
+				new Text(tag + Constants.COMMA + collection.get(0).getKey()));
+	}
+	
+	@Override
+	protected void cleanup(Reducer<Text, Text, NullWritable, Text>.Context context)
+			throws IOException, InterruptedException {
+		
+		super.cleanup(context);
+		multipleOutputs.close();
+		new File(sectorFileName).delete();
 	}
 }
