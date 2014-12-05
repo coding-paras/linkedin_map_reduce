@@ -1,5 +1,6 @@
 package edu.neu.ccs.predictor;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -12,6 +13,7 @@ import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
@@ -40,6 +42,9 @@ public class PredictorReducer extends Reducer<Text, UserProfile, NullWritable, T
 
 	private List<Classifier> sectorDataModels;
 	private Map<String, List<String>> topTagsPerSector;
+	private String topTagsPerSectorFile;
+	
+	private String dataModelsFile;
 
 	private FastVector wekaAttributes;
 	private int index;
@@ -56,6 +61,12 @@ public class PredictorReducer extends Reducer<Text, UserProfile, NullWritable, T
 		module = context.getConfiguration().get(Constants.MODULE, "PREDICTOR");
 		
 		this.sectorDataModels = new ArrayList<Classifier>();
+		
+		// Reading top tags file.
+		topTagsPerSectorFile = Constants.TOP_TAGS_SECTOR + System.currentTimeMillis();
+		Path topTagsPerSectorPath = new Path(topTagsPerSectorFile);
+		FileSystem.get(context.getConfiguration()).copyToLocalFile(new Path(Constants.TOP_TAGS_SECTOR), topTagsPerSectorPath);
+		topTagsPerSector = UtilHelper.populateKeyValues(topTagsPerSectorPath.toString());
 		
 		topTagsPerSector = populateTagsFromCache(context.getConfiguration());
 		
@@ -171,25 +182,17 @@ public class PredictorReducer extends Reducer<Text, UserProfile, NullWritable, T
 		}
 		
 		this.sectorDataModels.clear();
+		
+		new File(dataModelsFile).delete();
 	}
 	
 	private void populateSectorDataModels(String sector, Configuration conf) throws Exception {
 		
-		Path[] localFiles = DistributedCache.getLocalCacheFiles(conf);
-		if (localFiles == null) {
-
-			throw new RuntimeException("DistributedCache not present in HDFS");
-		}
-		
-		for (Path path : localFiles) {
-
-			//get the sector data model file
-			if (path.getName().contains(sector)) {
-				
-				extractDataModels(path);
-				break;
-			}
-		}
+		// Reading sector models
+		dataModelsFile = Constants.MODELS + System.currentTimeMillis();
+		Path dataModelsPath = new Path(dataModelsFile);
+		FileSystem.get(conf).copyToLocalFile(new Path(Constants.MODELS), dataModelsPath);
+		extractDataModels(dataModelsPath);
 	}
 	
 	private void extractDataModels(Path sectorFilePath) throws Exception {
@@ -321,5 +324,11 @@ public class PredictorReducer extends Reducer<Text, UserProfile, NullWritable, T
 		wekaAttributes.addElement(sectorAttribute);
 		wekaAttributes.addElement(experience);
 		wekaAttributes.addElement(classAttribute);
+	}
+	
+	@Override
+	protected void cleanup(Context context) throws IOException, InterruptedException {
+		super.cleanup(context);
+		new File(topTagsPerSectorFile).delete();
 	}
 }

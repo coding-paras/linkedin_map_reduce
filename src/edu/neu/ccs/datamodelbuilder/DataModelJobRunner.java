@@ -92,9 +92,10 @@ public class DataModelJobRunner {
 
 		BufferedWriter tagSectorWriter = new BufferedWriter(new OutputStreamWriter(
 				hdfs.create(new Path(pathToWrite))));
+
 		BufferedReader bufferedReader = null;
 		Path filePath = null;
-
+		
 		for (int i = 0; i < status.length; i++) {
 
 			filePath = status[i].getPath();
@@ -117,5 +118,4 @@ public class DataModelJobRunner {
 		}
 		tagSectorWriter.close();
 	}
-
 }
