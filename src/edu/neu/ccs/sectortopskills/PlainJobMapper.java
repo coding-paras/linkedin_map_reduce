@@ -16,13 +16,13 @@ import edu.neu.ccs.constants.Constants;
 import edu.neu.ccs.objects.Position;
 import edu.neu.ccs.objects.UserProfile;
 
-public class PLAINJobMapper extends Mapper<Object, Text, Text, UserProfile> {
+public class PlainJobMapper extends Mapper<Object, Text, Text, UserProfile> {
 
 	private Gson gson;
 	private Type userProfileType;
 	int yearToBeConsidered;
 
-	private static Logger logger = Logger.getLogger(PLAINJobMapper.class);
+	private static Logger logger = Logger.getLogger(PlainJobMapper.class);
 
 	/**
 	 * Initializing Gson, setting up type for de-serializing.

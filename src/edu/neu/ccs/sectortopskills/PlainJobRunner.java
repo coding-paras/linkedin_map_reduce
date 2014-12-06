@@ -16,7 +16,7 @@ import org.apache.hadoop.util.GenericOptionsParser;
 import edu.neu.ccs.constants.Constants;
 import edu.neu.ccs.objects.UserProfile;
 
-public class PLAINJobRunner {
+public class PlainJobRunner {
 
 	public static void main(String[] args) throws Exception {
 		Configuration conf = new Configuration();
@@ -31,9 +31,9 @@ public class PLAINJobRunner {
 
 		Job job = new Job(conf, "Top Skills Per Sector");
 
-		job.setJarByClass(PLAINJobRunner.class);
-		job.setMapperClass(PLAINJobMapper.class);
-		job.setReducerClass(PLAINJobReducer.class);
+		job.setJarByClass(PlainJobRunner.class);
+		job.setMapperClass(PlainJobMapper.class);
+		job.setReducerClass(PlainJobReducer.class);
 
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(UserProfile.class);
@@ -49,9 +49,9 @@ public class PLAINJobRunner {
 		FileSystem hdfs = FileSystem.get(job.getConfiguration());
 		FileSystem s3fs = FileSystem.get(URI.create(otherArgs[3]),job.getConfiguration());
 		
-		s3fs.copyToLocalFile(new Path(URI.create(otherArgs[3])), new Path(Constants.COUNTRY_CITY_CSV + "a"));
-		hdfs.copyFromLocalFile(new Path(Constants.COUNTRY_CITY_CSV + "a"), new Path(Constants.COUNTRY_CITY_CSV));
-		new File(Constants.COUNTRY_CITY_CSV + "a").delete();
+		s3fs.copyToLocalFile(new Path(URI.create(otherArgs[3])), new Path(Constants.COUNTRY_CITY_CSV + "_"));
+		hdfs.copyFromLocalFile(new Path(Constants.COUNTRY_CITY_CSV + "_"), new Path(Constants.COUNTRY_CITY_CSV));
+		new File(Constants.COUNTRY_CITY_CSV + "_").delete();
 
 		System.exit(job.waitForCompletion(true) ? 1 : 0);
 	}

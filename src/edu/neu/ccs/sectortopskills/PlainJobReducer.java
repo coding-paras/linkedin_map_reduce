@@ -16,7 +16,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 import edu.neu.ccs.constants.Constants;
 import edu.neu.ccs.objects.UserProfile;
 
-public class PLAINJobReducer extends Reducer<Text, UserProfile, NullWritable, Text> {
+public class PlainJobReducer extends Reducer<Text, UserProfile, NullWritable, Text> {
 
 	private StringBuffer buffer;
 	private Map<String, String> cityCountry;
