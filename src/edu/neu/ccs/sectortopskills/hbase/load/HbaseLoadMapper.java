@@ -17,6 +17,7 @@ import org.apache.log4j.Logger;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 
 import edu.neu.ccs.constants.Constants;
 import edu.neu.ccs.constants.Constants.UserProfileEnum;
@@ -28,6 +29,7 @@ public class HbaseLoadMapper extends Mapper<Object, Text, ImmutableBytesWritable
 	private Gson gson;
 	private Type userProfileType;
 	private HTable table;
+	private Map<String, Position> lastKnownPositionPerYearSector;
 	
 	private static Logger logger = Logger.getLogger(HbaseLoadMapper.class);
 
@@ -37,6 +39,9 @@ public class HbaseLoadMapper extends Mapper<Object, Text, ImmutableBytesWritable
 		// Opening the Linkedin table
 		Configuration conf = context.getConfiguration();
 		table = new HTable(conf, conf.get(TableOutputFormat.OUTPUT_TABLE));
+		gson = new Gson();
+		userProfileType = new TypeToken<UserProfile>(){}.getType();
+		lastKnownPositionPerYearSector = new HashMap<String, Position>();
 		
 		super.setup(context);
 	}
@@ -58,10 +63,9 @@ public class HbaseLoadMapper extends Mapper<Object, Text, ImmutableBytesWritable
 		int finalStartYear = Integer.MAX_VALUE, finalEndYear = Integer.MIN_VALUE;
 		int startYear, endYear;
 		String keyStr = null;
-		ImmutableBytesWritable rowKey = null;
 		
 		String sector = userProfile.getIndustry();
-		Map<String, Position> lastKnownPositionPerYearSector = new HashMap<String, Position>();
+		sector = (sector == null ? Constants.EMPTY_STRING : sector);
 		for (Position position : userProfile.getPositions()) {
 
 			if (position.getStartDate() == null) {
@@ -91,44 +95,75 @@ public class HbaseLoadMapper extends Mapper<Object, Text, ImmutableBytesWritable
 			}
 		}
 		
-		Position lastKnownPosition = null;
-		Put put = null;
+		if (finalStartYear == Integer.MAX_VALUE) {
+			
+			emitUserProfilePerYear(userProfile, 0, sector, key.toString(), context);
+		}
+		
 		for (int i = finalStartYear; i <= finalEndYear; i++) {
 			
-			// Emitting user profile for each year
-			keyStr = i + Constants.COMMA + sector + Constants.COMMA + System.currentTimeMillis();
-			rowKey = new ImmutableBytesWritable(Bytes.toBytes(keyStr));
-			
-			//Creating a new row
-	        put = new Put(rowKey.get());
-	        
-	        //Adding the firstname of the user
-	        put.add(Constants.COLUMN_FAMILY_BYTES, Bytes.toBytes(UserProfileEnum.FIRSTNAME.name()), Bytes.toBytes(userProfile.getFirstName()));
-	        
-	        //
-	        put.add(Constants.COLUMN_FAMILY_BYTES, Bytes.toBytes(UserProfileEnum.LASTNAME.name()), Bytes.toBytes(userProfile.getLastName()));
-
-	        //
-	        put.add(Constants.COLUMN_FAMILY_BYTES, Bytes.toBytes(UserProfileEnum.LOCATION.name()), Bytes.toBytes(userProfile.getLocation()));
-	        
-	        //
-	        put.add(Constants.COLUMN_FAMILY_BYTES, Bytes.toBytes(UserProfileEnum.NUMCONNECTIONS.name()), Bytes.toBytes(userProfile.getNumOfConnections()));
-	        
-	        //
-	        lastKnownPosition = lastKnownPositionPerYearSector.get(i + Constants.COMMA + sector);
-	        
-	        //
-	        put.add(Constants.COLUMN_FAMILY_BYTES, Bytes.toBytes(UserProfileEnum.POSITION_LAST_KNOWN_COMPANY.name()), Bytes.toBytes(lastKnownPosition == null ? null : lastKnownPosition.getCompanyName()));
-	        
-	        //
-	        put.add(Constants.COLUMN_FAMILY_BYTES, Bytes.toBytes(UserProfileEnum.POSITION_LAST_KNOWN_TITLE.name()), Bytes.toBytes(lastKnownPosition == null ? null : lastKnownPosition.getTitle()));
-	        
-	        //
-	        put.add(Constants.COLUMN_FAMILY_BYTES, Bytes.toBytes(UserProfileEnum.REL_EXPERIENCE.name()), Bytes.toBytes(userProfile.getRelevantExperience()));
-	        
-	        //Writing the record to the table.
-	        context.write(rowKey, put);
+			emitUserProfilePerYear(userProfile, i, sector, key.toString(), context);
 		}
+		
+		lastKnownPositionPerYearSector.clear();
+	}
+	
+	private void emitUserProfilePerYear(UserProfile userProfile, int year, String sector, String offset, Context context) 
+			throws IOException, InterruptedException {
+
+		context.getCounter(Constants.HBASE_DATA_LOAD, Constants.EMITTED_DATA).increment(1);
+		
+		Position lastKnownPosition = null;
+		String keyStr = null, strValue = null;
+		ImmutableBytesWritable rowKey = null;
+		Put put = null;
+		
+		// Emitting user profile for each year
+		keyStr = year + Constants.COMMA + sector + Constants.COMMA + offset + System.currentTimeMillis();
+		rowKey = new ImmutableBytesWritable(Bytes.toBytes(keyStr));
+
+		//Creating a new row
+		put = new Put(rowKey.get());
+
+		//Adding the firstname of the user
+		strValue = userProfile.getFirstName();
+		put.add(Constants.COLUMN_FAMILY_BYTES, Bytes.toBytes(UserProfileEnum.FIRSTNAME.name()), 
+				Bytes.toBytes(strValue == null ? Constants.EMPTY_STRING : strValue));
+
+		//
+		strValue = userProfile.getLastName();
+		put.add(Constants.COLUMN_FAMILY_BYTES, Bytes.toBytes(UserProfileEnum.LASTNAME.name()), 
+				Bytes.toBytes(strValue == null ? Constants.EMPTY_STRING : strValue));
+
+		//
+		strValue = userProfile.getLocation();
+		put.add(Constants.COLUMN_FAMILY_BYTES, Bytes.toBytes(UserProfileEnum.LOCATION.name()), 
+				Bytes.toBytes(strValue == null ? Constants.EMPTY_STRING : strValue));
+
+		//
+		strValue = userProfile.getNumOfConnections();
+		put.add(Constants.COLUMN_FAMILY_BYTES, Bytes.toBytes(UserProfileEnum.NUMCONNECTIONS.name()), 
+				Bytes.toBytes(strValue == null ? Constants.EMPTY_STRING : strValue));
+
+		//
+		lastKnownPosition = lastKnownPositionPerYearSector.get(year + Constants.COMMA + sector);
+
+		//
+		strValue = (lastKnownPosition == null ? Constants.EMPTY_STRING : lastKnownPosition.getCompanyName());
+		put.add(Constants.COLUMN_FAMILY_BYTES, Bytes.toBytes(UserProfileEnum.POSITION_LAST_KNOWN_COMPANY.name()),
+				Bytes.toBytes(strValue == null ? Constants.EMPTY_STRING : strValue));
+
+		//
+		strValue = (lastKnownPosition == null ? Constants.EMPTY_STRING : lastKnownPosition.getTitle());
+		put.add(Constants.COLUMN_FAMILY_BYTES, Bytes.toBytes(UserProfileEnum.POSITION_LAST_KNOWN_TITLE.name()), 
+				Bytes.toBytes(strValue == null ? Constants.EMPTY_STRING : strValue));
+
+		//
+		put.add(Constants.COLUMN_FAMILY_BYTES, Bytes.toBytes(UserProfileEnum.REL_EXPERIENCE.name()),
+				Bytes.toBytes(userProfile.getRelevantExperience() == null ? 0 : userProfile.getRelevantExperience()));
+
+		//Writing the record to the table.
+		context.write(rowKey, put);
 	}
 
 	@Override
