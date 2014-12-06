@@ -25,11 +25,11 @@ public class PlainJobRunner {
 
 		if (otherArgs.length != 4) {
 
-			System.err.println("Usage: 	tagindustry <in> <out> <year> <city_countryfile>");
+			System.err.println("Usage: emp_per_sector_per_region_plain <in> <out> <year> <city_countryfile>");
 			System.exit(2);
 		}
 
-		Job job = new Job(conf, "Top Skills Per Sector");
+		Job job = new Job(conf, "Employees Per Sector Per Region - Plain");
 
 		job.setJarByClass(PlainJobRunner.class);
 		job.setMapperClass(PlainJobMapper.class);

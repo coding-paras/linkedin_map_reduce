@@ -75,36 +75,6 @@ public class PredictorJobRunner {
 		// Displaying the counters and their values
 		System.exit(job.waitForCompletion(true) ? 0 : 1);
 	}
-	
-	private static void readModelFileIntoHDFS(FileSystem hdfs, FileSystem s3fs,
-			FileStatus[] status) throws IOException {
-
-		BufferedWriter tagSectorWriter = null;
-
-		BufferedReader bufferedReader = null;
-		Path filePath = null;
-
-		for (int i = 0; i < status.length; i++) {
-
-			filePath = status[i].getPath();
-
-			tagSectorWriter = new BufferedWriter(
-					new OutputStreamWriter(hdfs.create(new Path(Constants.MODELS + filePath.getName()))));
-
-			bufferedReader = new BufferedReader(new InputStreamReader(s3fs.open(filePath)));
-
-			String line = null;
-
-			while ((line = bufferedReader.readLine()) != null) {
-
-				tagSectorWriter.write(line);
-				tagSectorWriter.write("\n");
-			}
-
-			bufferedReader.close();
-			tagSectorWriter.close();
-		}
-	}
 
 	private static void readFileIntoHDFS(FileSystem hdfs, FileSystem s3fs,
 			FileStatus[] status, String fileName, String pathToWrite)
