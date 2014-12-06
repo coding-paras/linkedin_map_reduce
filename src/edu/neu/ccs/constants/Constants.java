@@ -7,6 +7,7 @@ public class Constants {
 	public static final String DATE_DELIMITER_2 = "/";
 	public static final String EMPTY_STRING = "";
 	public static final String PLUS = "\\+";
+	public static final String SPACE = " ";
 	
 	public static final String SECOND_OUTPUT_FOLDER = "SECOND_OUTPUT_FOLDER";
 	
@@ -19,6 +20,7 @@ public class Constants {
 	public static final String SECTOR_HUNT = "/tmp/sector_hunt.csv";
 	public static final String MODELS = "/tmp/models/";
 	public static final String SECTOR_CSV = "/tmp/sector.csv";
+	public static final String COUNTRY_CITY_CSV = "/tmp/countrycity.csv";
 	public static final String YEAR_COUNTER_GRP = "YEAR";
 	
 	//Tags
