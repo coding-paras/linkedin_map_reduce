@@ -59,4 +59,12 @@ public class Constants {
 	public static final String PRUNED_DATA_TAG = "pruneddata";
 	public static final String TEST_DATA_TAG = "testdata";
 	public static final String TOP_TAGS_FILE_TAG = "toptagsfile";
+	
+	public static final String COLUMN_FAMILY = "LINKEDIN";
+	public static final byte[] COLUMN_FAMILY_BYTES = COLUMN_FAMILY.getBytes();
+	
+	public static enum UserProfileEnum {
+		
+		FIRSTNAME, LASTNAME, NUMCONNECTIONS, LOCATION, POSITION_LAST_KNOWN_TITLE, POSITION_LAST_KNOWN_COMPANY, REL_EXPERIENCE;
+	}
 }
