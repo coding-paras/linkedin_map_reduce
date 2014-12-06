@@ -60,9 +60,9 @@ public class PredictorJobRunner {
 		Path filePath = null;
 		for (int i = 0; i < status.length; i++) {
 			filePath = status[i].getPath();
-			s3fs.copyToLocalFile(new Path(URI.create(otherArgs[2] + filePath.getName())), new Path(Constants.MODELS + filePath.getName() + "a"));
-			hdfs.copyFromLocalFile(new Path(Constants.MODELS + filePath.getName() + "a"), new Path(Constants.MODELS + filePath.getName()));
-			new File(Constants.MODELS + filePath.getName() + "a").delete();
+			s3fs.copyToLocalFile(new Path(URI.create(otherArgs[2] + filePath.getName())), new Path(Constants.MODELS + filePath.getName() + "_"));
+			hdfs.copyFromLocalFile(new Path(Constants.MODELS + filePath.getName() + "_"), new Path(Constants.MODELS + filePath.getName()));
+			new File(Constants.MODELS + filePath.getName() + "_").delete();
 		}		
 		
 		//readModelFileIntoHDFS(hdfs, s3fs, status);

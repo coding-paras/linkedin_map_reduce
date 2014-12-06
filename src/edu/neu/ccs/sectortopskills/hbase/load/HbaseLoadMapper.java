@@ -29,7 +29,7 @@ public class HbaseLoadMapper extends Mapper<Object, Text, ImmutableBytesWritable
 	private Gson gson;
 	private Type userProfileType;
 	private HTable table;
-	private Map<String, Position> lastKnownPositionPerYearSector;
+	private Map<String, Position> lastKnownPositionPerYear;
 	
 	private static Logger logger = Logger.getLogger(HbaseLoadMapper.class);
 
@@ -41,7 +41,7 @@ public class HbaseLoadMapper extends Mapper<Object, Text, ImmutableBytesWritable
 		table = new HTable(conf, conf.get(TableOutputFormat.OUTPUT_TABLE));
 		gson = new Gson();
 		userProfileType = new TypeToken<UserProfile>(){}.getType();
-		lastKnownPositionPerYearSector = new HashMap<String, Position>();
+		lastKnownPositionPerYear = new HashMap<String, Position>();
 		
 		super.setup(context);
 	}
@@ -62,7 +62,6 @@ public class HbaseLoadMapper extends Mapper<Object, Text, ImmutableBytesWritable
 
 		int finalStartYear = Integer.MAX_VALUE, finalEndYear = Integer.MIN_VALUE;
 		int startYear, endYear;
-		String keyStr = null;
 		
 		String sector = userProfile.getIndustry();
 		sector = (sector == null ? Constants.EMPTY_STRING : sector);
@@ -90,8 +89,7 @@ public class HbaseLoadMapper extends Mapper<Object, Text, ImmutableBytesWritable
 			
 			for (int i = startYear; i <= endYear; i++) {
 				
-				keyStr = i + Constants.COMMA + sector;
-				lastKnownPositionPerYearSector.put(keyStr, position);
+				lastKnownPositionPerYear.put(String.valueOf(i), position);
 			}
 		}
 		
@@ -105,7 +103,7 @@ public class HbaseLoadMapper extends Mapper<Object, Text, ImmutableBytesWritable
 			emitUserProfilePerYear(userProfile, i, sector, key.toString(), context);
 		}
 		
-		lastKnownPositionPerYearSector.clear();
+		lastKnownPositionPerYear.clear();
 	}
 	
 	private void emitUserProfilePerYear(UserProfile userProfile, int year, String sector, String offset, Context context) 
@@ -146,7 +144,7 @@ public class HbaseLoadMapper extends Mapper<Object, Text, ImmutableBytesWritable
 				Bytes.toBytes(strValue == null ? Constants.EMPTY_STRING : strValue));
 
 		//
-		lastKnownPosition = lastKnownPositionPerYearSector.get(year + Constants.COMMA + sector);
+		lastKnownPosition = lastKnownPositionPerYear.get(String.valueOf(year));
 
 		//
 		strValue = (lastKnownPosition == null ? Constants.EMPTY_STRING : lastKnownPosition.getCompanyName());
