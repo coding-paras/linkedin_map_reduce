@@ -20,7 +20,6 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 
 import edu.neu.ccs.constants.Constants;
-import edu.neu.ccs.objects.UserProfile;
 
 public class PredictorJobRunner {
 
@@ -42,7 +41,7 @@ public class PredictorJobRunner {
 		job.setReducerClass(PredictorReducer.class);
 
 		job.setMapOutputKeyClass(Text.class);
-		job.setMapOutputValueClass(UserProfile.class);
+		job.setMapOutputValueClass(Text.class);
 
 		job.setOutputKeyClass(NullWritable.class);
 		job.setOutputValueClass(Text.class);

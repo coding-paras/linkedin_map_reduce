@@ -2,6 +2,7 @@ package edu.neu.ccs.predictor;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -25,6 +26,10 @@ import weka.core.FastVector;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.SerializationHelper;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import edu.neu.ccs.constants.Constants;
 import edu.neu.ccs.constants.Constants.ClassLabel;
 import edu.neu.ccs.objects.ConfusionMatrix;
@@ -33,9 +38,17 @@ import edu.neu.ccs.objects.Sector;
 import edu.neu.ccs.objects.UserProfile;
 import edu.neu.ccs.util.UtilHelper;
 
-public class PredictorReducer extends Reducer<Text, UserProfile, NullWritable, Text> {
+public class PredictorReducer extends Reducer<Text, Text, NullWritable, Text> {
+	
+	private Gson gson;
+	private Type userProfileType;
 
 	private static Logger logger = Logger.getLogger(PredictorReducer.class);
+	
+	private StringBuffer buffer;
+	
+	private int actualLeft;
+	private int predictLeft;
 	
 	private static String module;
 
@@ -57,6 +70,13 @@ public class PredictorReducer extends Reducer<Text, UserProfile, NullWritable, T
 		
 		super.setup(context);
 		
+		gson = new Gson();
+		userProfileType = new TypeToken<UserProfile>() {}.getType();
+		
+		buffer = new StringBuffer();
+		actualLeft = 0;
+		predictLeft = 0;
+		
 		module = context.getConfiguration().get(Constants.MODULE, "PREDICTOR");
 		
 		this.sectorDataModels = new ArrayList<Classifier>();
@@ -71,8 +91,8 @@ public class PredictorReducer extends Reducer<Text, UserProfile, NullWritable, T
 	}
 
 	@Override
-	protected void reduce(Text key, Iterable<UserProfile> values, Context context) throws IOException, InterruptedException {
-
+	protected void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+		
 		if (key == null || key.toString().equals("null")) {
 			
 			context.getCounter(module, Constants.NULL_SECTOR).increment(1);
@@ -91,21 +111,22 @@ public class PredictorReducer extends Reducer<Text, UserProfile, NullWritable, T
 		}
 		
 		createModelStructure(key.toString());
-
+		UserProfile parsedUserProfile = null;
 		List<UserProfile> userProfiles = new ArrayList<UserProfile>();
-		for (Iterator<UserProfile> iterator = values.iterator(); iterator.hasNext();) {
-			
-			userProfiles.add(iterator.next());
+		for (Iterator<Text> iterator = values.iterator(); iterator.hasNext();) {
+			parsedUserProfile = gson.fromJson(iterator.next().toString(), userProfileType);
+			userProfiles.add(parsedUserProfile);
 		}
 		testingSet = new Instances("testingSet", wekaAttributes, userProfiles.size());
 		testingSet.setClassIndex(index - 1);
+		
 
 		Instance data = new Instance(index);
+		
 		for (UserProfile userProfile : userProfiles) {
-			
 			int currentIndex = 0;
 
-			Set<String> tags = populateTags(userProfile, "2012");
+			Set<String> tags = populateTags(userProfile);
 
 			if (userProfile.getPositions().size() > 0) {
 				
@@ -152,11 +173,27 @@ public class PredictorReducer extends Reducer<Text, UserProfile, NullWritable, T
 			logger.error(e);
 		}
 		
+		emitStats(context, key.toString(), userProfiles.size());
+		
+		buffer.delete(0, buffer.length());
+		
+		actualLeft = 0;
+		predictLeft = 0;
 		this.sectorDataModels.clear();
 		
 		new File(dataModelsFile).delete();
 	}
 	
+	private void emitStats(Context context, String sector, int testDataSize) throws IOException, InterruptedException {
+		buffer.append(sector).append(Constants.COMMA)
+		.append(testDataSize).append(Constants.COMMA)
+		.append(actualLeft).append(Constants.COMMA)
+		.append(predictLeft);
+		
+		context.write(NullWritable.get(), new Text(buffer.toString()));
+		
+	}
+
 	private void populateSectorDataModels(String sector, Configuration conf) throws Exception {
 		
 		// Reading sector models
@@ -191,14 +228,18 @@ public class PredictorReducer extends Reducer<Text, UserProfile, NullWritable, T
 			}
 			else if (actualValue == 0.0 && predictedValue == 1.0) {
 				// FP
+				predictLeft ++;
 				context.getCounter(ConfusionMatrix.FALSE_POSITIVE).increment(1);
 			}
 			else if (actualValue == 1.0 && predictedValue == 0.0) {
 				//FN
+				actualLeft ++;
 				context.getCounter(ConfusionMatrix.FALSE_NEGATIVE).increment(1);
 			}
 			else if (actualValue == 1.0 && predictedValue == 1.0) {
 				// TP
+				predictLeft++;
+				actualLeft++;
 				context.getCounter(ConfusionMatrix.TRUE_POSITIVE).increment(1);
 			}
 		}
@@ -220,16 +261,12 @@ public class PredictorReducer extends Reducer<Text, UserProfile, NullWritable, T
 		return finalVote > 0 ? 1 :0;
 	}
 
-	private Set<String> populateTags(UserProfile userProfile, String year) {
+	private Set<String> populateTags(UserProfile userProfile) {
 		
 		List<Position> positions = userProfile.getPositions();
 		
 		Set<String> tags = new HashSet<String>();
 		
-		for(Position position: positions) {
-
-			tags.add(position.getTitle());
-		}
 		tags.addAll(userProfile.getSkillSet());
 		
 		if (positions.size() >= 2) {

@@ -13,7 +13,7 @@ import com.google.gson.reflect.TypeToken;
 
 import edu.neu.ccs.objects.UserProfile;
 
-public class PredictorMapper extends Mapper<Object, Text, Text, UserProfile> {
+public class PredictorMapper extends Mapper<Object, Text, Text, Text> {
 
 	private Gson gson;
 	private Type userProfileType;
@@ -34,7 +34,7 @@ public class PredictorMapper extends Mapper<Object, Text, Text, UserProfile> {
 			
 			UserProfile userProfile = gson.fromJson(value.toString(), userProfileType);
 
-			context.write(new Text(userProfile.getIndustry()), userProfile);
+			context.write(new Text(userProfile.getIndustry()), new Text(gson.toJson(userProfile)));
 			
 		} catch (JsonSyntaxException jse) {
 			logger.error(jse);
