@@ -24,7 +24,7 @@ public class Constants {
 	public static final String YEAR_COUNTER_GRP = "YEAR";
 	
 	//Tags
-	public static final String INDUSTRY_TAG = "#IT#";
+	public static final String SECTOR_TAG = "#ST#";
 	public static final String UNIQUE_INDUSTRIES_KEY_TAG = "#I#";
 	public static final String PRUNED_DATA = "#PD#";
 	

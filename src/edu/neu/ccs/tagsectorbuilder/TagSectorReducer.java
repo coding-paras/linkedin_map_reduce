@@ -22,16 +22,13 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 
 import edu.neu.ccs.constants.Constants;
-import edu.neu.ccs.util.UtilHelper;
 
 public class TagSectorReducer extends Reducer<Text, Text, NullWritable, Text> {
 
 	private Map<String, Integer> topSector;
-	private Map<String, String> industryToSector;
 	private Map<String, Integer> tagCounts;
 	private StringBuffer buffer;
 	private MultipleOutputs<NullWritable, Text> multipleOutputs;
-	public String sectorFileName;
 
 	@Override
 	protected void setup(Context context) throws IOException, InterruptedException {
@@ -40,23 +37,16 @@ public class TagSectorReducer extends Reducer<Text, Text, NullWritable, Text> {
 		tagCounts = new HashMap<String, Integer>();
 		buffer = new StringBuffer();
 		multipleOutputs = new MultipleOutputs<NullWritable, Text>(context);
-		
-		sectorFileName = Constants.SECTOR_CSV + System.currentTimeMillis();
-		Path path = new Path(sectorFileName);
-		Configuration conf = context.getConfiguration();
-		FileSystem.get(conf).copyToLocalFile(new Path(Constants.SECTOR_CSV), path);
-		
-		industryToSector = UtilHelper.populateKeyValue(path.toString());
 	}
 
 	@Override
 	protected void reduce(Text key, Iterable<Text> values, Context context)
 			throws IOException, InterruptedException {
 
-		String industry = key.toString();
-		if (industry.contains(Constants.INDUSTRY_TAG)) {
+		String sector = key.toString();
+		if (sector.contains(Constants.SECTOR_TAG)) {
 			
-			emitTopTagsPerSector(values, context, industryToSector.get(industry.split(Constants.COMMA)[0]));
+			emitTopTagsPerSector(values, context, sector.split(Constants.COMMA)[0]);
 			return;
 		}
 		
@@ -95,10 +85,10 @@ public class TagSectorReducer extends Reducer<Text, Text, NullWritable, Text> {
 		finallyEmit(sector, tagsList, context);
 	}
 	
-	private void finallyEmit(String industry, List<Entry<String, Integer>> tagsList, Context context) 
+	private void finallyEmit(String sector, List<Entry<String, Integer>> tagsList, Context context) 
 			throws IOException, InterruptedException {
 
-		buffer.append(industry).append(Constants.COMMA);
+		buffer.append(sector).append(Constants.COMMA);
 		
 		int numberOfTags = tagsList.size();
 		if (numberOfTags > 5) {
@@ -122,16 +112,14 @@ public class TagSectorReducer extends Reducer<Text, Text, NullWritable, Text> {
 	private void emitTopSector(Text key, Iterable<Text> values, Context context)
 			throws IOException, InterruptedException {
 		
-		String industries[] = null;
-		String sector = null;
+		String sectors[] = null;
 		Integer count = null;
 		for (Text value : values) {
 			
-			industries = value.toString().split(Constants.COMMA);
+			sectors = value.toString().split(Constants.COMMA);
 
-			for (String industry_1 : industries) {
+			for (String sector : sectors) {
 				
-				sector = industryToSector.get(industry_1);
 				if (sector != null) {
 					
 					count = topSector.get(sector);
@@ -197,6 +185,5 @@ public class TagSectorReducer extends Reducer<Text, Text, NullWritable, Text> {
 		
 		super.cleanup(context);
 		multipleOutputs.close();
-		new File(sectorFileName).delete();
 	}
 }
